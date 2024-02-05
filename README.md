@@ -3,6 +3,38 @@ ABOUT
 This is the base implementation of a full crawler that uses a spacetime
 cache server to receive requests.
 
+TEAM MEMBERS
+-------------------------
+
+- Santiago Palomares https://github.com/TiagoV1
+    - NetID: spaloma2
+    - Student ID: 23919089
+
+- Queensley Lim https://github.com/qmlim
+    - NetID: qmlim
+    - Student ID: 34909351
+
+COMMON COMMANDS
+-------------------------
+
+- git clone [url] : Clones a repository on GitHub with all of 
+the files, branches, and commits.
+
+- git status : Shows what branch you are currently working on, 
+files that are staged and unstaged, and other important information.
+
+- git add [file_path] : Adds the file in the specified filepath to be staged
+and ready for to commit
+
+- git commit -m "message" : Applies the changes done in your local repository 
+along with an optional message describing what has changed the in repository.
+
+- git push : Pushes those changes onto the remote repository along with the 
+commit message.
+
+- git pull : Recieves any changes to the remote repository into the local repository.
+
+
 CONFIGURATION
 -------------------------
 
