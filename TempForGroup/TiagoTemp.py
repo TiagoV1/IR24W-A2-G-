@@ -52,6 +52,13 @@ def my_tokenize(text_content):
             token_list.append(word.lower())
     return token_list
 
+
+def is_ics_uci_edu_subdomain(link):
+    # this function will help answer questions 4 and 1
+    # it checks if the subdomain is ics.uci.edu
+    hostInfo = urlparse(link).hostname
+    return hostInfo.endswith('ics.uci.edu')
+
 # 'ics.uci.edu/','cs.uci.edu/','informatics.uci.edu/','stat.uci.edu/'
 def is_valid(url):
     # Decide whether to crawl this url or not. 
