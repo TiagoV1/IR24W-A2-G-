@@ -76,6 +76,16 @@ def is_ics_uci_edu_subdomain(link):
     hostInfo = urlparse(link).hostname
     return hostInfo.endswith('ics.uci.edu')
 
+
+def is_new_longest_page(other_link, other_word_count):
+    global longest_page
+    if other_link == longest_page.link:
+        return False
+    if other_word_count > longest_page.word_count:
+        longest_page = current_longest_page_template(link=other_link, word_count=other_word_count)
+        return True
+    return False
+
 # 'ics.uci.edu/','cs.uci.edu/','informatics.uci.edu/','stat.uci.edu/'
 def is_valid(url):
     # Decide whether to crawl this url or not. 
