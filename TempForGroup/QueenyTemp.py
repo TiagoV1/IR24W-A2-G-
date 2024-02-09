@@ -4,8 +4,8 @@ from urllib import robotparser
 import time
 
 
-visted_urls = []    # List of all urls that have been visited
-check_dynamic_traps_query = []    # List of sliced querys to check for dynamic traps
+visited_urls = []                    # List of all urls that have been visited
+check_dynamic_traps_query = set()    # Set of sliced querys to check for dynamic traps
 
 
 def scraper(url, resp):
@@ -36,34 +36,39 @@ def read_robots(url,  user_agent='*'):
     return rp.can_fetch(user_agent, url)    # Searches robots.txt and returns boolean if site can be crawled
 
 
+def dynamic_trap_check(url, parsed):
+    '''
+    Checks if URL is a Dynamic Trap but looking 
+    into matching keywords.
+    ''' 
+    url_query = parsed.query
+    index = url_query.index("=")
+    new_url_query = parsed.scheme + "://" + parsed.netloc + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
+
+    if new_url_query in check_dynamic_traps_query:              # Checks if the URL is already been crawled through
+        return True
+    else:
+        check_dynamic_traps_query.add(new_url_query)
+        return False
+
+
 def is_trap(url, parsed):
     '''
     Checks if url is a trap, returns true if so
-    else returns false
+    else returns false.
+    Covers:
+        - Duplicate URL Traps
+        - Repeated Paths Trap (ICS Calendar)
+        - Dynamic URL Trap
     '''
-    # Traps:
-    #   Infinite Loop Trap: may have to be implemented into extract_next_links
-    #   Duplicate URL Traps
-    #   Calendar Traps
-    #       Check for repeats
-    #   Some Dynamic Traps
-
-    if re.match(r'(\w+)(?:/\1)+', url.path):     # Covers Calendar Trap by checking repeating paths
-        return True
-    
-    elif url in visted_urls:                    # Covers Duplicate URL Traps by checking already visited URLs
-        return True
-
-    else:                                       # Covers Dynamic URL Trap by checking for duplicate params
-        url_query = parsed.query
-        index = url_query.index("=")
-        new_url_query = parsed.scheme + parsed.netloc + parsed.path + "?" + url_query[0:index]
-
-        if new_url_query in check_dynamic_traps_query:
+    if url in visited_urls:                                 # Covers Duplicate URL Traps by checking already visited URLs
+        return True                         
+    else:                                                   # Covers Calendar Trap by checking repeating paths
+        path_segments = parsed.path.split("/")
+        if len(path_segments) != len(set(path_segments)):   # Checks for any repeating paths
             return True
-        else:
-            check_dynamic_traps_query.append(new_url_query)
-            return False
+
+    return dynamic_trap_check(url, parsed)                  # Covers Dynamic URL Trap by checking for duplicate params
 
 
 def is_valid(url):
@@ -79,12 +84,10 @@ def is_valid(url):
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
 
-        if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):
-            if read_robots(url):
-                if not is_trap(url, parsed):
+        if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
+            if read_robots(url):                # Checks if robots.txt allows crawlers
+                if not is_trap(url, parsed):    # Check if the URL is a trap
                     return True
-
-                
 
         # return not re.match(
         #     r".*.(css|js|bmp|gif|jpe?g|ico"
