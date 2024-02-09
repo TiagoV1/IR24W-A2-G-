@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup
 import time
 from collections import namedtuple
@@ -48,13 +48,13 @@ def extract_next_links(url, resp):
     if resp.status == 200 and resp.raw_response.content:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             page_tokens = my_tokenize(page_content)
-            if len(page_tokens) > 500:
+            if len(page_tokens) > 400:
                 if is_ics_uci_edu_subdomain(url):
-                    subdomain_and_numpages[url] = 0
-                extracted_links = page_content.findall('a')
-                for link in extracted_links:
-                    unique_pages_found.add(link.get('href'))
-                    extracted_links.add(link.get('href'))
+                    subdomain_and_numpages[url] = 0# this is temporary because idk how to increase the count correctly
+            extracted_links = page_content.findall('a')
+            for link in extracted_links:
+                unique_pages_found.add(link.get('href'))
+                extracted_links.add(link.get('href'))
     else:
         print("ERROR", resp.error)
     time.sleep(2)
@@ -85,6 +85,12 @@ def is_new_longest_page(other_link, other_word_count):
         longest_page = current_longest_page_template(link=other_link, word_count=other_word_count)
         return True
     return False
+
+def remove_fragment(url):
+    parsed_url = urlparse(url)
+    url_without_fragment = parsed_url._replace(fragment='')
+    reconstructed_url = urlunparse(url_without_fragment)
+    return reconstructed_url
 
 # 'ics.uci.edu/','cs.uci.edu/','informatics.uci.edu/','stat.uci.edu/'
 def is_valid(url):
