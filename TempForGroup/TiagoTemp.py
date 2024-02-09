@@ -1,8 +1,9 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 global stop_words
-stop_words = ['a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
+stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
               'as', 'at', 'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by',
               "can't", 'cannot', 'could', "couldn't", 'did', "didn't", 'do', 'does', "doesn't", 'doing', "don't",
               'down', 'during', 'each', 'few', 'for', 'from', 'further', 'had', "hadn't", 'has', "hasn't", 'have',
@@ -16,7 +17,7 @@ stop_words = ['a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', '
               'too', 'under', 'until', 'up', 'very', 'was', "wasn't", 'we', "we'd", "we'll", "we're", "we've", 'were',
               "weren't", 'what', "what's", 'when', "when's", 'where', "where's", 'which', 'while', 'who', "who's",
               'whom', 'why', "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're",
-              "you've", 'your', 'yours', 'yourself', 'yourselves']
+              "you've", 'your', 'yours', 'yourself', 'yourselves')
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -34,9 +35,19 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     extracted_links = set()
     if resp.status == 200 and resp.raw_response.content:
-        return list(extracted_links)
+            page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
+            page_tokens = my_tokenize(page_content)
     else:
         print("ERROR", resp.error)
+    return list(extracted_links)
+
+# this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
+def my_tokenize(text_content):
+    token_list = list()
+    for word in re.findall('[^a-zA-Z0-9]', text_content):
+        if word.lower() not in stop_words:
+            token_list.append(word.lower())
+    return token_list
 
 # 'ics.uci.edu/','cs.uci.edu/','informatics.uci.edu/','stat.uci.edu/'
 def is_valid(url):
