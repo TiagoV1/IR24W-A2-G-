@@ -37,12 +37,15 @@ def extract_next_links(url, resp):
     if resp.status == 200 and resp.raw_response.content:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             page_tokens = my_tokenize(page_content)
+            if len(page_tokens) > 500:
+                print("this is running")
     else:
         print("ERROR", resp.error)
     return list(extracted_links)
 
-# this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
 def my_tokenize(text_content):
+    # this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
+    # Tokens are all alphanumeric characters
     token_list = list()
     for word in re.findall('[^a-zA-Z0-9]', text_content):
         if word.lower() not in stop_words:
