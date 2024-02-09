@@ -5,7 +5,7 @@ import time
 
 
 visted_urls = []    # List of all urls that have been visited
-
+check_dynamic_traps_query = []    # List of sliced querys to check for dynamic traps
 
 
 def scraper(url, resp):
@@ -36,7 +36,7 @@ def read_robots(url,  user_agent='*'):
     return rp.can_fetch(user_agent, url)    # Searches robots.txt and returns boolean if site can be crawled
 
 
-def is_trap(parsed):
+def is_trap(url, parsed):
     '''
     Checks if url is a trap, returns true if so
     else returns false
@@ -48,15 +48,22 @@ def is_trap(parsed):
     #       Check for repeats
     #   Some Dynamic Traps
 
-    if re.match(r'(\w+)(?:/\1)+', parsed.path):     # Covers Calendar Trap by checking repeating paths
+    if re.match(r'(\w+)(?:/\1)+', url.path):     # Covers Calendar Trap by checking repeating paths
         return True
     
-    elif visted_urls.contains(parsed):              # Covers Duplicate URL Traps by checking already visited URLs
+    elif url in visted_urls:                    # Covers Duplicate URL Traps by checking already visited URLs
         return True
 
-    #elif
+    else:                                       # Covers Dynamic URL Trap by checking for duplicate params
+        url_query = parsed.query
+        index = url_query.index("=")
+        new_url_query = parsed.scheme + parsed.netloc + parsed.path + "?" + url_query[0:index]
 
-    return False
+        if new_url_query in check_dynamic_traps_query:
+            return True
+        else:
+            check_dynamic_traps_query.append(new_url_query)
+            return False
 
 
 def is_valid(url):
@@ -72,9 +79,9 @@ def is_valid(url):
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
 
-        if parsed.scheme in set(["http", "https"]) and re.match(pattern, parsed.path.lower()):
+        if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):
             if read_robots(url):
-                if not is_trap(parsed):
+                if not is_trap(url, parsed):
                     return True
 
                 
@@ -94,4 +101,3 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
-
