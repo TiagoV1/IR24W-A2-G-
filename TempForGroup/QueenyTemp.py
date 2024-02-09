@@ -4,6 +4,9 @@ from urllib import robotparser
 import time
 
 
+visted_urls = []    # List of all urls that have been visited
+
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -39,7 +42,7 @@ def is_trap(parsed):
     else returns false
     '''
     # Traps:
-    #   Infinite Loop Trap
+    #   Infinite Loop Trap: may have to be implemented into extract_next_links
     #   Duplicate URL Traps
     #   Calendar Traps
     #       Check for repeats
@@ -48,9 +51,10 @@ def is_trap(parsed):
     if re.match(r'(\w+)(?:/\1)+', parsed.path):     # Covers Calendar Trap by checking repeating paths
         return True
     
-    # elif 
+    elif visted_urls.contains(parsed):              # Covers Duplicate URL Traps by checking already visited URLs
+        return True
 
-
+    #elif
 
     return False
 
