@@ -48,13 +48,21 @@ def extract_next_links(url, resp):
     if resp.status == 200 and resp.raw_response.content:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             page_tokens = my_tokenize(page_content)
-            if len(page_tokens) > 400:
+            if len(page_tokens) > 100:
                 if is_ics_uci_edu_subdomain(url):
                     subdomain_and_numpages[url] = 0# this is temporary because idk how to increase the count correctly
-            extracted_links = page_content.findall('a')
-            for link in extracted_links:
-                unique_pages_found.add(link.get('href'))
-                extracted_links.add(link.get('href'))
+                
+                if is_new_longest_page(url, len(page_tokens)):
+                    longest_page = current_longest_page_template(link=url, word_count=len(page_tokens))
+
+                update_word_frequency(page_tokens)
+
+                extracted_links = page_content.find_all('a')
+                for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
+                    absolute_link = link['href']
+                    absolute_link = remove_fragment(absolute_link)
+                    unique_pages_found.add(absolute_link)
+                    extracted_links.add(absolute_link)
     else:
         print("ERROR", resp.error)
     time.sleep(2)
@@ -76,13 +84,19 @@ def is_ics_uci_edu_subdomain(link):
     hostInfo = urlparse(link).hostname
     return hostInfo.endswith('ics.uci.edu')
 
+def update_word_frequency(tokens):
+    global words_and_frequency
+    for token in tokens:
+        if token not in words_and_frequency:
+            words_and_frequency[token] = 1
+        else:
+            words_and_frequency[token] += 1
 
 def is_new_longest_page(other_link, other_word_count):
     global longest_page
     if other_link == longest_page.link:
         return False
     if other_word_count > longest_page.word_count:
-        longest_page = current_longest_page_template(link=other_link, word_count=other_word_count)
         return True
     return False
 
@@ -114,3 +128,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+def generate_report_txt():
+    with open('report.txt', 'w') as file:
+        file.write("This is a line for the report.\n")
