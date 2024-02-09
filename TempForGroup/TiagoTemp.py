@@ -2,6 +2,7 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import time
+from collections import namedtuple
 
 global stop_words
 stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
@@ -19,6 +20,15 @@ stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', '
               "weren't", 'what', "what's", 'when', "when's", 'where', "where's", 'which', 'while', 'who', "who's",
               'whom', 'why', "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're",
               "you've", 'your', 'yours', 'yourself', 'yourselves')
+#question 1
+unique_pages_found = set()
+#question 2
+current_longest_page_template = namedtuple('current_longest_page', ['link', 'word_count'])
+longest_page = current_longest_page_template(link='', word_count=0)
+#question 3
+words_and_frequency = dict()
+#question 4
+subdomain_and_numpages = dict() # subdomain as key, pages count as value
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -39,7 +49,12 @@ def extract_next_links(url, resp):
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             page_tokens = my_tokenize(page_content)
             if len(page_tokens) > 500:
-                print("this is running")
+                if is_ics_uci_edu_subdomain(url):
+                    subdomain_and_numpages[url] = 0
+                extracted_links = page_content.findall('a')
+                for link in extracted_links:
+                    unique_pages_found.add(link.get('href'))
+                    extracted_links.add(link.get('href'))
     else:
         print("ERROR", resp.error)
     time.sleep(2)
