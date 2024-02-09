@@ -27,10 +27,32 @@ def read_robots(url,  user_agent='*'):
     Reads robots.txt and deems if it is 
     allowed to be crawled to.
     '''
-    rp = robotparser.RobotFileParser()
+    rp = robotparser.RobotFileParser()      # Parses robot.txt
     rp.set_url(url + '/robots.txt')         # Set the URL of the robots.txt file
     rp.read()                               # Read and parse the robots.txt file
-    return rp.can_fetch(user_agent, url)
+    return rp.can_fetch(user_agent, url)    # Searches robots.txt and returns boolean if site can be crawled
+
+
+def is_trap(parsed):
+    '''
+    Checks if url is a trap, returns true if so
+    else returns false
+    '''
+    # Traps:
+    #   Infinite Loop Trap
+    #   Duplicate URL Traps
+    #   Calendar Traps
+    #       Check for repeats
+    #   Some Dynamic Traps
+
+    if re.match(r'(\w+)(?:/\1)+', parsed.path):     # Covers Calendar Trap by checking repeating paths
+        return True
+    
+    # elif 
+
+
+
+    return False
 
 
 def is_valid(url):
@@ -41,17 +63,15 @@ def is_valid(url):
     # *.cs.uci.edu/*
     # *.informatics.uci.edu/*
     # *.stat.uci.edu/*
-    # Traps:
-    #   Infinite Loop Trap
-    #   Duplicate URL
 
     try:
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
 
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, parsed.path.lower()):
-            if read_robots(parsed):
-                return True
+            if read_robots(url):
+                if not is_trap(parsed):
+                    return True
 
                 
 
@@ -70,3 +90,4 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
