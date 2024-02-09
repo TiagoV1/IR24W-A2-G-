@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+import time
 
 global stop_words
 stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
@@ -41,6 +42,7 @@ def extract_next_links(url, resp):
                 print("this is running")
     else:
         print("ERROR", resp.error)
+    time.sleep(2)
     return list(extracted_links)
 
 def my_tokenize(text_content):
