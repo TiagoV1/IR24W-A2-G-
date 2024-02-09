@@ -21,7 +21,7 @@ stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', '
               'whom', 'why', "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're",
               "you've", 'your', 'yours', 'yourself', 'yourselves')
 #question 1
-unique_pages_found = set()
+unique_pages_found = set()#http://www.ics.uci.edu#aaa and http://www.ics.uci.edu#bbb are the same URL.
 #question 2
 current_longest_page_template = namedtuple('current_longest_page', ['link', 'word_count'])
 longest_page = current_longest_page_template(link='', word_count=0)
