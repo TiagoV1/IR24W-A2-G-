@@ -8,7 +8,7 @@ from urllib import robotparser
 
 visited_urls = []                                # List of all urls that have been visited
 check_dynamic_traps_query = set()                # Set of sliced querys to check for dynamic traps
-date_terms = set("past", "day", "month", "year") # Set of date terms
+date_terms = {"past", "day", "month", "year"} # Set of date terms
 
 global stop_words
 stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
