@@ -113,6 +113,7 @@ def update_word_frequency(tokens):
         else:
             words_and_frequency[token] += 1
 
+
 def update_unique_pages_found(link, other_word_count):
     link = remove_fragment(link)
     if link in unique_pages_found:
@@ -127,6 +128,7 @@ def remove_fragment(url):
     reconstructed_url = urlunparse(url_without_fragment)
     return reconstructed_url
 
+
 def read_robots(url, user_agent='IR UW24 34909351,23919089'):
     '''
     Reads robots.txt and deems if it is 
@@ -138,16 +140,16 @@ def read_robots(url, user_agent='IR UW24 34909351,23919089'):
     return rp.can_fetch(user_agent, url)    # Searches robots.txt and returns boolean if site can be crawled
 
 
-def dynamic_trap_check(url, parsed):
+def dynamic_trap_check(parsed):
     '''
     Checks if URL is a Dynamic Trap but looking 
     into matching keywords.
     ''' 
     url_query = parsed.query
     index = url_query.index("=")
-    new_url_query = parsed.scheme + "://" + parsed.netloc + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
+    new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
 
-    if new_url_query in check_dynamic_traps_query:              # Checks if the URL is already been crawled through
+    if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
         return True
     else:
         check_dynamic_traps_query.add(new_url_query)
@@ -188,8 +190,8 @@ def is_trap(url, parsed):
     elif "session" in path_segments or "session" in parsed.query:   # Check for Session ID traps
         return True
 
-    return dynamic_trap_check(url, parsed) or calendar_trap_check(parsed, path_segments)  # Covers Dynamic URL Trap by checking for duplicate params
-                                                                                          # and Covers Calendar Trap by checking repeating paths
+    return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+                                                                                    # and Covers Calendar Trap by checking repeating paths
 
 
 def is_valid(url):
@@ -217,7 +219,6 @@ def is_valid(url):
                         + r"|epub|dll|cnf|tgz|sha1"
                         + r"|thmx|mso|arff|rtf|jar|csv"
                         + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
-            
         return False
     
     except TypeError:
