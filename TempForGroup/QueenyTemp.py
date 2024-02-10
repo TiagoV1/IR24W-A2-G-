@@ -6,9 +6,9 @@ from collections import namedtuple
 from urllib import robotparser
 
 
-visited_urls = []                        # List of all urls that have been visited
-check_dynamic_traps_query = set()        # Set of sliced querys to check for dynamic traps
-date_terms = set("day", "month", "year") # Set of date terms
+visited_urls = []                                # List of all urls that have been visited
+check_dynamic_traps_query = set()                # Set of sliced querys to check for dynamic traps
+date_terms = set("past", "day", "month", "year") # Set of date terms
 
 
 global stop_words
@@ -106,14 +106,6 @@ def create_subdomain_dictionary(url):
             subdomain_and_numpages[parsed_hostname] = 1
 
 
-def sort_subdomains():
-    '''
-    Sorts subdomain dictionary alphabetically.
-    '''
-    global subdomain_and_numpages
-    subdomain_and_numpages = dict(sorted(subdomain_and_numpages.items()))
-
-
 def update_word_frequency(tokens):
     global words_and_frequency
     for token in tokens:
@@ -173,7 +165,7 @@ def calendar_trap_check(parsed, path_segments):
 
     if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
         return True
-    elif "past" in parsed.query:    # Checks for evenDisplay=past to avoid going too deep into calendar
+    elif bool(set(parsed.query) & date_terms):    # Checks for evenDisplay=past to avoid going too deep into calendar
         return True
     return False
 
@@ -188,7 +180,6 @@ def is_trap(url, parsed):
         - Session ID Trap
         - Dynamic URL Trap
     '''
-    date_pattern = re.compile(r'\b(?:\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2}|[a-zA-Z]{3}/\d{2}/[a-zA-Z]{3})\b')
     path_segments = parsed.path.lower().split("/")
     
     if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs

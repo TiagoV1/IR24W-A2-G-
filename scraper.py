@@ -6,9 +6,9 @@ from collections import namedtuple
 from urllib import robotparser
 
 
-visited_urls = []                        # List of all urls that have been visited
-check_dynamic_traps_query = set()        # Set of sliced querys to check for dynamic traps
-date_terms = set("day", "month", "year") # Set of date terms
+visited_urls = []                                # List of all urls that have been visited
+check_dynamic_traps_query = set()                # Set of sliced querys to check for dynamic traps
+date_terms = set("past", "day", "month", "year") # Set of date terms
 
 global stop_words
 stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
@@ -33,9 +33,11 @@ words_and_frequency = dict()
 #question 4
 subdomain_and_numpages = dict() # subdomain as key, pages count as value
 
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
+
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -52,9 +54,8 @@ def extract_next_links(url, resp):
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             page_tokens = my_tokenize(page_content)
             if len(page_tokens) > 100:
-                if is_ics_uci_edu_subdomain(url):
-                    subdomain_and_numpages[url] = 0# this is temporary because idk how to increase the count correctly
 
+                create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
                 update_word_frequency(page_tokens)
 
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
@@ -68,6 +69,7 @@ def extract_next_links(url, resp):
     time.sleep(2)
     return list(extracted_links)
 
+
 def my_tokenize(text_content):
     # this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
     # Tokens are all alphanumeric characters
@@ -79,10 +81,29 @@ def my_tokenize(text_content):
 
 
 def is_ics_uci_edu_subdomain(link):
-    # this function will help answer questions 4 and 1
-    # it checks if the subdomain is ics.uci.edu
+    '''
+    Checks if the subdomain is ics.uci.edu
+    '''
     hostInfo = urlparse(link).hostname
-    return hostInfo.endswith('ics.uci.edu')
+    return re.match(r'(?:http?://|https?://).*\.ics\.uci\.edu', hostInfo)
+    
+    
+def create_subdomain_dictionary(url):
+    '''
+    Parses the URL and checks to see if the hostname 
+    is in the subdomain dictionary. If so, then the count
+    for the subdomain increases count by 1, else, makes it a 
+    key and sets it to 1.
+    '''
+    global subdomain_and_numpages
+    parsed_hostname = urlparse(url).hostname
+
+    if is_ics_uci_edu_subdomain(url):
+        if parsed_hostname in subdomain_and_numpages:
+            subdomain_and_numpages[parsed_hostname] += 1
+        else:
+            subdomain_and_numpages[parsed_hostname] = 1
+
 
 def update_word_frequency(tokens):
     global words_and_frequency
@@ -137,11 +158,11 @@ def calendar_trap_check(parsed, path_segments):
     '''
     Checks for any URLs that are calendar traps.
     '''
-    date_pattern = re.compile(r'/(?:(?:\d{4}-\d{2}-\d{2})|(?:\d{4}-\d{2})|(?:\d{2}-\d{2}-\d{4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
+    date_pattern = re.compile(r'/(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
 
     if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
         return True
-    elif "past" in parsed.query:    # Checks for evenDisplay=past to avoid going too deep into calendar
+    elif bool(set(parsed.query) & date_terms):    # Checks for evenDisplay=past to avoid going too deep into calendar
         return True
     return False
 
@@ -156,8 +177,7 @@ def is_trap(url, parsed):
         - Session ID Trap
         - Dynamic URL Trap
     '''
-    date_pattern = re.compile(r'\b(?:\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2}|[a-zA-Z]{3}/\d{2}/[a-zA-Z]{3})\b')
-    path_segments = parsed.path.split("/")
+    path_segments = parsed.path.lower().split("/")
     
     if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
         return True  
