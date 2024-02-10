@@ -205,3 +205,36 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+def generate_report_txt():
+    with open('report.txt', 'w') as report:
+        report.write("------------------Report------------------"+ "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #1------------------"+"\n")
+        report.write("Unique pages found: " + str(len(unique_pages_found.keys())) + "\n")
+        report.write("" + "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #2------------------"+"\n")
+        report.write("URL with the largest word count: "+ max(unique_pages_found, key=unique_pages_found.get) + "\n")
+        report.write("" + "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #3------------------"+"\n")
+        report.write("The following are the 50 most common words")
+        top_50_words = sorted(words_and_frequency.items(), key=lambda item: item[1], reverse=True)[:50]
+        for word, frequency in top_50_words:
+            report.write(f"Word: {word}, Frequency: {frequency}" + "\n")
+        report.write("" + "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #4------------------"+"\n")
+        report.write("Number of subdomains in the ics.uci.edu domain: " + str(len(subdomain_and_numpages.keys())))
+        sorted_subdomains = sorted(subdomain_and_numpages.keys())
+        for subdomain in sorted_subdomains:
+            num_pages = subdomain_and_numpages[subdomain]
+            print(f"{subdomain}, {num_pages}")
+        report.write("" + "\n")
+        report.write("" + "\n")
+        
