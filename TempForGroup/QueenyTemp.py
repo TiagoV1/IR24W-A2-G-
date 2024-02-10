@@ -55,9 +55,8 @@ def extract_next_links(url, resp):
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             page_tokens = my_tokenize(page_content)
             if len(page_tokens) > 100:
-                if is_ics_uci_edu_subdomain(url):
-                    create_subdomain_dictionary(url)
 
+                create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
                 update_word_frequency(page_tokens)
 
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
@@ -83,8 +82,9 @@ def my_tokenize(text_content):
 
 
 def is_ics_uci_edu_subdomain(link):
-    # this function will help answer questions 4 and 1
-    # it checks if the subdomain is ics.uci.edu
+    '''
+    Checks if the subdomain is ics.uci.edu
+    '''
     hostInfo = urlparse(link).hostname
     return re.match(r'(?:http?://|https?://).*\.ics\.uci\.edu', hostInfo)
     
@@ -98,10 +98,12 @@ def create_subdomain_dictionary(url):
     '''
     global subdomain_and_numpages
     parsed_hostname = urlparse(url).hostname
-    if parsed_hostname in subdomain_and_numpages:
-        subdomain_and_numpages[parsed_hostname] += 1
-    else:
-        subdomain_and_numpages[parsed_hostname] = 1
+
+    if is_ics_uci_edu_subdomain(url):
+        if parsed_hostname in subdomain_and_numpages:
+            subdomain_and_numpages[parsed_hostname] += 1
+        else:
+            subdomain_and_numpages[parsed_hostname] = 1
 
 
 def update_word_frequency(tokens):
