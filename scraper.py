@@ -59,16 +59,17 @@ def extract_next_links(url, resp):
                     subdomain_and_numpages[url] = 0# this is temporary because idk how to increase the count correctly
                 
                 if is_new_longest_page(url, len(page_tokens)):
+                    global longest_page
                     longest_page = current_longest_page_template(link=url, word_count=len(page_tokens))
 
                 update_word_frequency(page_tokens)
 
-                extracted_links = page_content.find_all('a')
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
                     absolute_link = link['href']
-                    absolute_link = remove_fragment(absolute_link)
-                    unique_pages_found.add(absolute_link)
-                    extracted_links.add(absolute_link)
+                    if absolute_link != url and absolute_link not in visited_urls:
+                        visited_urls.append(absolute_link)
+                        unique_pages_found.add(remove_fragment(absolute_link))
+                        extracted_links.add(absolute_link)
     else:
         print("ERROR", resp.error)
     time.sleep(2)
