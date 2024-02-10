@@ -1,7 +1,6 @@
 import re
 from urllib.parse import urlparse
 from urllib import robotparser
-import time
 
 
 visited_urls = []                        # List of all urls that have been visited
