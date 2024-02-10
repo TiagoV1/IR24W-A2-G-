@@ -106,6 +106,14 @@ def create_subdomain_dictionary(url):
             subdomain_and_numpages[parsed_hostname] = 1
 
 
+def sort_subdomains():
+    '''
+    Sorts subdomain dictionary alphabetically.
+    '''
+    global subdomain_and_numpages
+    subdomain_and_numpages = dict(sorted(subdomain_and_numpages.items()))
+
+
 def update_word_frequency(tokens):
     global words_and_frequency
     for token in tokens:
@@ -130,7 +138,7 @@ def remove_fragment(url):
     return reconstructed_url
 
 
-def read_robots(url,  user_agent='*'):
+def read_robots(url, user_agent='IR UW24 34909351,23919089'):
     '''
     Reads robots.txt and deems if it is 
     allowed to be crawled to.
@@ -181,7 +189,7 @@ def is_trap(url, parsed):
         - Dynamic URL Trap
     '''
     date_pattern = re.compile(r'\b(?:\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2}|[a-zA-Z]{3}/\d{2}/[a-zA-Z]{3})\b')
-    path_segments = parsed.path.split("/")
+    path_segments = parsed.path.lower().split("/")
     
     if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
         return True  
@@ -213,15 +221,15 @@ def is_valid(url):
                 if not is_trap(url, parsed):    # Check if the URL is a trap
                     return True
 
-        # return not re.match(
-        #     r".*.(css|js|bmp|gif|jpe?g|ico"
-        #     + r"|png|tiff?|mid|mp2|mp3|mp4"
-        #     + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-        #     + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-        #     + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-        #     + r"|epub|dll|cnf|tgz|sha1"
-        #     + r"|thmx|mso|arff|rtf|jar|csv"
-        #     + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+        return not re.match(
+            r".*.(css|js|bmp|gif|jpe?g|ico"
+            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
             
         return False
     
