@@ -52,6 +52,8 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     
     #note that one megabyte is equal to 1024 * 1024
+    global visited_urls
+    
     extracted_links = set()
     if resp.status == 200 and resp.raw_response.content and resp.raw_response.content < 10 * 1024 * 1024:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
