@@ -122,6 +122,7 @@ def update_word_frequency(tokens):
 
 
 def update_unique_pages_found(link, other_word_count):
+    global unique_pages_found
     link = remove_fragment(link)
     if link in unique_pages_found:
         unique_pages_found[link] += other_word_count
