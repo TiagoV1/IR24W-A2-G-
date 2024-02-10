@@ -4,12 +4,13 @@ from bs4 import BeautifulSoup
 import time
 from collections import namedtuple
 from urllib import robotparser
+import requests
 
 
-visited_urls = []                                # List of all urls that have been visited
-check_dynamic_traps_query = set()                # Set of sliced querys to check for dynamic traps
-date_terms = set("past", "day", "month", "year") # Set of date terms
-
+visited_urls = []                               # List of all urls that have been visited
+check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
+date_terms = {"past", "day", "month", "year"}   # Set of date terms
+index_content = []                              # Index content of redirected URLs
 
 global stop_words
 stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
@@ -65,6 +66,10 @@ def extract_next_links(url, resp):
                         visited_urls.append(absolute_link)
                         update_unique_pages_found(url, len(page_tokens))
                         extracted_links.add(absolute_link)
+
+    elif resp.status == 301 or resp.status == 302:
+        index_content.append(url)
+
     else:
         print("ERROR", resp.error)
     time.sleep(2)
@@ -141,7 +146,7 @@ def read_robots(url, user_agent='IR UW24 34909351,23919089'):
     return rp.can_fetch(user_agent, url)    # Searches robots.txt and returns boolean if site can be crawled
 
 
-def dynamic_trap_check(url, parsed):
+def dynamic_trap_check(parsed):
     '''
     Checks if URL is a Dynamic Trap but looking 
     into matching keywords.
@@ -150,7 +155,7 @@ def dynamic_trap_check(url, parsed):
     index = url_query.index("=")
     new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
 
-    if new_url_query in check_dynamic_traps_query:              # Checks if the URL is already been crawled through
+    if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
         return True
     else:
         check_dynamic_traps_query.add(new_url_query)
@@ -191,8 +196,9 @@ def is_trap(url, parsed):
     elif "session" in path_segments or "session" in parsed.query:   # Check for Session ID traps
         return True
 
-    return dynamic_trap_check(url, parsed) or calendar_trap_check(parsed, path_segments)  # Covers Dynamic URL Trap by checking for duplicate params
-                                                                                          # and Covers Calendar Trap by checking repeating paths
+    return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+                                                                                    # and Covers Calendar Trap by checking repeating paths
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -210,20 +216,50 @@ def is_valid(url):
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
             if read_robots(url):                # Checks if robots.txt allows crawlers
                 if not is_trap(url, parsed):    # Check if the URL is a trap
-                    return True
-
-        return not re.match(
-            r".*.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
-            
+                    return not re.match(
+                        r".*.(css|js|bmp|gif|jpe?g|ico"
+                        + r"|png|tiff?|mid|mp2|mp3|mp4"
+                        + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+                        + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+                        + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+                        + r"|epub|dll|cnf|tgz|sha1"
+                        + r"|thmx|mso|arff|rtf|jar|csv"
+                        + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
         return False
     
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+def generate_report_txt():
+    with open('report.txt', 'w') as report:
+        report.write("------------------Report------------------"+ "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #1------------------"+"\n")
+        report.write("Unique pages found: " + str(len(unique_pages_found.keys())) + "\n")
+        report.write("" + "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #2------------------"+"\n")
+        report.write("URL with the largest word count: "+ max(unique_pages_found, key=unique_pages_found.get) + "\n")
+        report.write("" + "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #3------------------"+"\n")
+        report.write("The following are the 50 most common words")
+        top_50_words = sorted(words_and_frequency.items(), key=lambda item: item[1], reverse=True)[:50]
+        for word, frequency in top_50_words:
+            report.write(f"Word: {word}, Frequency: {frequency}" + "\n")
+        report.write("" + "\n")
+        report.write("" + "\n")
+
+        report.write("------------------QUESTION #4------------------"+"\n")
+        report.write("Number of subdomains in the ics.uci.edu domain: " + str(len(subdomain_and_numpages.keys())))
+        sorted_subdomains = sorted(subdomain_and_numpages.keys())
+        for subdomain in sorted_subdomains:
+            num_pages = subdomain_and_numpages[subdomain]
+            print(f"{subdomain}, {num_pages}")
+        report.write("" + "\n")
+        report.write("" + "\n")
+        
