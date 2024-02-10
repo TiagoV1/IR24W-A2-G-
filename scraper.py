@@ -26,11 +26,8 @@ stop_words = ('a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', '
               "weren't", 'what', "what's", 'when', "when's", 'where', "where's", 'which', 'while', 'who', "who's",
               'whom', 'why', "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're",
               "you've", 'your', 'yours', 'yourself', 'yourselves')
-#question 1
-unique_pages_found = set()#http://www.ics.uci.edu#aaa and http://www.ics.uci.edu#bbb are the same URL.
-#question 2
-current_longest_page_template = namedtuple('current_longest_page', ['link', 'word_count'])
-longest_page = current_longest_page_template(link='', word_count=0)
+#question 1 and question 2
+unique_pages_found = dict()#http://www.ics.uci.edu#aaa and http://www.ics.uci.edu#bbb are the same URL. # link='', word_count=0
 #question 3
 words_and_frequency = dict()
 #question 4
@@ -57,10 +54,6 @@ def extract_next_links(url, resp):
             if len(page_tokens) > 100:
                 if is_ics_uci_edu_subdomain(url):
                     subdomain_and_numpages[url] = 0# this is temporary because idk how to increase the count correctly
-                
-                if is_new_longest_page(url, len(page_tokens)):
-                    global longest_page
-                    longest_page = current_longest_page_template(link=url, word_count=len(page_tokens))
 
                 update_word_frequency(page_tokens)
 
@@ -68,7 +61,7 @@ def extract_next_links(url, resp):
                     absolute_link = link['href']
                     if absolute_link != url and absolute_link not in visited_urls:
                         visited_urls.append(absolute_link)
-                        unique_pages_found.add(remove_fragment(absolute_link))
+                        update_unique_pages_found(url, len(page_tokens))
                         extracted_links.add(absolute_link)
     else:
         print("ERROR", resp.error)
@@ -99,13 +92,13 @@ def update_word_frequency(tokens):
         else:
             words_and_frequency[token] += 1
 
-def is_new_longest_page(other_link, other_word_count):
-    global longest_page
-    if other_link == longest_page.link:
-        return False
-    if other_word_count > longest_page.word_count:
-        return True
-    return False
+def update_unique_pages_found(link, other_word_count):
+    link = remove_fragment(link)
+    if link in unique_pages_found:
+        unique_pages_found[link] += other_word_count
+    else:
+        unique_pages_found[link] = other_word_count
+
 
 def remove_fragment(url):
     parsed_url = urlparse(url)
