@@ -4,9 +4,9 @@ from urllib import robotparser
 import time
 
 
-visited_urls = []                    # List of all urls that have been visited
-check_dynamic_traps_query = set()    # Set of sliced querys to check for dynamic traps
-
+visited_urls = []                        # List of all urls that have been visited
+check_dynamic_traps_query = set()        # Set of sliced querys to check for dynamic traps
+date_terms = set("day", "month", "year") # Set of date terms
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -52,6 +52,19 @@ def dynamic_trap_check(url, parsed):
         return False
 
 
+def calendar_trap_check(parsed, path_segments):
+    '''
+    Checks for any URLs that are calendar traps.
+    '''
+    date_pattern = re.compile(r'/(?:(?:\d{4}-\d{2}-\d{2})|(?:\d{4}-\d{2})|(?:\d{2}-\d{2}-\d{4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
+
+    if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
+        return True
+    elif "past" in parsed.query:    # Checks for evenDisplay=past to avoid going too deep into calendar
+        return True
+    return False
+
+
 def is_trap(url, parsed):
     '''
     Checks if url is a trap, returns true if so
@@ -59,16 +72,23 @@ def is_trap(url, parsed):
     Covers:
         - Duplicate URL Traps
         - Repeated Paths Trap (ICS Calendar)
+        - Session ID Trap
         - Dynamic URL Trap
     '''
-    if url in visited_urls:                                 # Covers Duplicate URL Traps by checking already visited URLs
-        return True                         
-    else:                                                   # Covers Calendar Trap by checking repeating paths
-        path_segments = parsed.path.split("/")
-        if len(path_segments) != len(set(path_segments)):   # Checks for any repeating paths
-            return True
+    date_pattern = re.compile(r'\b(?:\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2}|[a-zA-Z]{3}/\d{2}/[a-zA-Z]{3})\b')
+    path_segments = parsed.path.split("/")
+    
+    if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
+        return True  
 
-    return dynamic_trap_check(url, parsed)                  # Covers Dynamic URL Trap by checking for duplicate params
+    elif len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
+        return True
+        
+    elif "session" in path_segments or "session" in parsed.query:   # Check for Session ID traps
+        return True
+
+    return dynamic_trap_check(url, parsed) or calendar_trap_check(parsed, path_segments)  # Covers Dynamic URL Trap by checking for duplicate params
+                                                                                          # and Covers Calendar Trap by checking repeating paths
 
 
 def is_valid(url):
