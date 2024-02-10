@@ -105,30 +105,3 @@ def remove_fragment(url):
     url_without_fragment = parsed_url._replace(fragment='')
     reconstructed_url = urlunparse(url_without_fragment)
     return reconstructed_url
-
-# 'ics.uci.edu/','cs.uci.edu/','informatics.uci.edu/','stat.uci.edu/'
-def is_valid(url):
-    # Decide whether to crawl this url or not. 
-    # If you decide to crawl it, return True; otherwise return False.
-    # There are already some conditions that return False.
-    # *.ics.uci.edu/*
-    # *.cs.uci.edu/*
-    # *.informatics.uci.edu/*
-    # *.stat.uci.edu/*
-
-    try:
-        parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
-            return False
-        pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
-        if re.match(pattern, parsed.path.lower()):
-            return True
-        return False
-
-    except TypeError:
-        print ("TypeError for ", parsed)
-        raise
-
-def generate_report_txt():
-    with open('report.txt', 'w') as file:
-        file.write("This is a line for the report.\n")
