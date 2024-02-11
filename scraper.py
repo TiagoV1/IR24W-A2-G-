@@ -6,7 +6,8 @@ from collections import namedtuple
 from urllib import robotparser
 
 
-visited_urls = set()                               # List of all urls that have been visited
+
+visited_urls = set()                            # List of all urls that have been visited
 check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
 date_terms = {"past", "day", "month", "year"}   # Set of date terms
 index_content = []                              # Index content of redirected URLs
@@ -27,6 +28,7 @@ stop_words = {'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', '
               "weren't", 'what', "what's", 'when', "when's", 'where', "where's", 'which', 'while', 'who', "who's",
               'whom', 'why', "why's", 'with', "won't", 'would', "wouldn't", 'you', "you'd", "you'll", "you're",
               "you've", 'your', 'yours', 'yourself', 'yourselves'}
+
 #question 1 and question 2
 unique_pages_found = dict()#http://www.ics.uci.edu#aaa and http://www.ics.uci.edu#bbb are the same URL. # link='', word_count=0
 #question 3
@@ -62,7 +64,7 @@ def extract_next_links(url, resp):
                 page_tokens = my_tokenize(page_content)
                 if len(page_tokens) > 100:
 
-                    create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
+                    create_subdomain_dictionary(url)
                     update_word_frequency(page_tokens)
 
                     #Use urllib to create absolute links with urljoin
@@ -94,8 +96,8 @@ def my_tokenize(text_content):
     for line in text_content.split('\n'):
         #Work on threshold for later
         
-        words = re.split(r'[^a-zA-Z0-9]', line.lower())# spliting and turning all to lower case
-        words = [word for word in words if (word and word not in stop_words and len(word) > 1)]# to  remove duplicates and filter out stop words
+        words = re.split(r'[^a-zA-Z0-9]', line.lower())                                             # spliting and turning all to lower case
+        words = [word for word in words if (word and word not in stop_words and len(word) > 1)]     # to  remove duplicates and filter out stop words
         tokens_list.extend(words)
     return tokens_list
 
@@ -142,11 +144,13 @@ def update_unique_pages_found(link, other_word_count):
     else:
         unique_pages_found[link] = other_word_count
 
+
 def remove_fragment(url):
     parsed_url = urlparse(url)
     url_without_fragment = parsed_url._replace(fragment='')
     reconstructed_url = urlunparse(url_without_fragment)
     return reconstructed_url
+
 
 def dynamic_trap_check(parsed):
     '''
@@ -158,16 +162,6 @@ def dynamic_trap_check(parsed):
         query_params = parse_qs(url_query)
         if len(query_params) > 7:
             return True
-        # index = url_query.index("=")
-        # new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
-
-        # if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-        #     print(str(parsed) + " dynamic trap")
-        #     return True
-        # else:
-        #     check_dynamic_traps_query.add(new_url_query)
-        #     print("not dynamic trap")
-        #     return False
     return False
 
 
@@ -175,13 +169,12 @@ def calendar_trap_check(parsed, path_segments):
     '''
     Checks for any URLs that are calendar traps.
     '''
-    # print("calendar check will start")
     date_pattern = re.compile(r'/(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
 
-    if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
+    if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL's path
         print(str(parsed) + " is calendar trap")
         return True
-    return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
+    return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past and other similar date terms in query to avoid going too deep into calendar
 
 
 def is_trap(url, parsed):
@@ -194,15 +187,10 @@ def is_trap(url, parsed):
         - Session ID Trap
         - Dynamic URL Trap
     '''
-    # print("is_valid is starting")
     path_segments = parsed.path.lower().split("/")
     path_segments = path_segments[1:]
     
-    # if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
-    #     print("it is a visited url trap")
-    #     return True
-    
-    if len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
+    if len(path_segments) != len(set(path_segments)):               # Checks for any repeating paths
         print("Repeating path url trap: " + url)
         return True
         
@@ -228,7 +216,7 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:\w+\.)?(?:ics|cs|informatics|stat)\.uci\.edu/")
-        if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
+        if re.match(pattern, url.lower()):  # Checks if URL matches the requirements
             if not is_trap(url, parsed):    # Check if the URL is a trap
                 #Avoid user uploads
                 if "wp-content/uploads" in parsed.path.lower():
@@ -240,6 +228,9 @@ def is_valid(url):
                 
                 #Avoid queries that are not id related
                 if parsed.query != '' and "id" not in parsed.query.lower():
+                    return False
+                
+                if "/files" in url or "/file" in url:
                     return False
                 
                 return not re.match(
@@ -260,6 +251,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 def generate_report_txt():
     with open('report.txt', 'w') as report:
