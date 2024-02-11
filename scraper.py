@@ -64,6 +64,8 @@ def extract_next_links(url, resp):
                 update_word_frequency(page_tokens)
 
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
+                    print("FLAG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    print(link)
                     absolute_link = link['href']
                     if absolute_link != url and absolute_link not in visited_urls:
                         visited_urls.append(absolute_link)
