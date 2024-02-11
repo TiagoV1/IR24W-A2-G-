@@ -274,7 +274,12 @@ def generate_report_txt():
         report.write("" + "\n")
 
         report.write("------------------QUESTION #2------------------"+"\n")
-        report.write("URL with the largest word count: "+ max(unique_pages_found, key=unique_pages_found.get) + "\n")
+        #report.write("URL with the largest word count: "+ max(unique_pages_found, key=unique_pages_found.get) + "\n")
+        if unique_pages_found:
+            max_url = max(unique_pages_found, key=unique_pages_found.get)
+            report.write("URL with the largest word count: " + max_url + "\n")
+        else:
+            report.write("No URLs found with word count. The dictionary is empty.\n")
         report.write("" + "\n")
         report.write("" + "\n")
 
