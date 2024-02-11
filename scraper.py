@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, urlunparse, parse_qs
+from urllib.parse import urlparse, urlunparse, parse_qs, urldefrag
 from bs4 import BeautifulSoup
 import time
 from collections import namedtuple
@@ -57,13 +57,15 @@ def extract_next_links(url, resp):
     if url in visited_urls:
         return []
     try: 
-        if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
+        if resp.status == 200 and len(resp.raw_response.content) < 10 * 1024 * 1024:
                 page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
                 page_tokens = my_tokenize(page_content)
                 if len(page_tokens) > 100:
 
                     create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
                     update_word_frequency(page_tokens)
+
+                    #Use urllib to create absolute links with urljoin
 
                     for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
                         absolute_link = link['href']
@@ -90,8 +92,10 @@ def my_tokenize(text_content):
     global stop_words
     tokens_list = []
     for line in text_content.split('\n'):
-        words = re.findall(r'[^a-zA-Z]', line.lower())
-        words = [word for word in words if word not in stop_words]
+        #Work on threshold for later
+        
+        words = re.split(r'[^a-zA-Z0-9]', line.lower())# spliting and turning all to lower case
+        words = [word for word in words if (word and word not in stop_words)]# to  remove duplicates and filter out stop words
         tokens_list.extend(words)
     return tokens_list
 
@@ -131,31 +135,18 @@ def update_word_frequency(tokens):
 
 
 def update_unique_pages_found(link, other_word_count):
-    global unique_pages_found
+    global unique_pages_found 
     link = remove_fragment(link)
     if link in unique_pages_found:
         unique_pages_found[link] += other_word_count
     else:
         unique_pages_found[link] = other_word_count
 
-
 def remove_fragment(url):
     parsed_url = urlparse(url)
     url_without_fragment = parsed_url._replace(fragment='')
     reconstructed_url = urlunparse(url_without_fragment)
     return reconstructed_url
-
-
-def read_robots(url, user_agent='IR UW24 34909351,23919089'):
-    '''
-    Reads robots.txt and deems if it is 
-    allowed to be crawled to.
-    '''
-    rp = robotparser.RobotFileParser()      # Parses robot.txt
-    rp.set_url(url + '/robots.txt')         # Set the URL of the robots.txt file
-    rp.read()                               # Read and parse the robots.txt file
-    return rp.can_fetch(user_agent, url)    # Searches robots.txt and returns boolean if site can be crawled
-
 
 def dynamic_trap_check(parsed):
     '''
@@ -238,32 +229,31 @@ def is_valid(url):
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:\w+\.)?(?:ics|cs|informatics|stat)\.uci\.edu/")
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
-            if read_robots(url):                # Checks if robots.txt allows crawlers
-                if not is_trap(url, parsed):    # Check if the URL is a trap
-                    #Avoid user uploads
-                    if "wp-content/uploads" in parsed.path.lower():
-                        return False
-                    
-                    #Avoid zip attachments
-                    if "zip-attachment" in parsed.path.lower():
-                        return False
-                    
-                    #Avoid queries that are not id related
-                    if parsed.query != '' and "id" not in parsed.query.lower():
-                        return False
-                    
-                    return not re.match(
-                        r".*\.(css|js|bmp|gif|jpe?g|ico|php"
-                        + r"|png|tiff?|mid|mp2|mp3|mp4"
-                        + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-                        + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|ppsx"
-                        + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|ova"
-                        + r"|epub|dll|cnf|tgz|sha1"
-                        + r"|thmx|mso|arff|rtf|jar|csv|xml"
-                        + r"|r|py|java|c|cc|cpp|h|svn|svn-base|bw|bigwig"
-                        + r"|txt|odc"
-                        + r"|bam|bai|out|tab|edgecount|junction|ipynb|bib|lif"
-                        + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            if not is_trap(url, parsed):    # Check if the URL is a trap
+                #Avoid user uploads
+                if "wp-content/uploads" in parsed.path.lower():
+                    return False
+                
+                #Avoid zip attachments
+                if "zip-attachment" in parsed.path.lower():
+                    return False
+                
+                #Avoid queries that are not id related
+                if parsed.query != '' and "id" not in parsed.query.lower():
+                    return False
+                
+                return not re.match(
+                    r".*\.(css|js|bmp|gif|jpe?g|ico|php"
+                    + r"|png|tiff?|mid|mp2|mp3|mp4"
+                    + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+                    + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|ppsx"
+                    + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|ova"
+                    + r"|epub|dll|cnf|tgz|sha1"
+                    + r"|thmx|mso|arff|rtf|jar|csv|xml"
+                    + r"|r|py|java|c|cc|cpp|h|svn|svn-base|bw|bigwig"
+                    + r"|txt|odc"
+                    + r"|bam|bai|out|tab|edgecount|junction|ipynb|bib|lif"
+                    + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
         return False
 
     
