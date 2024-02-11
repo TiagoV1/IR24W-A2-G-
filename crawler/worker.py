@@ -18,18 +18,22 @@ class Worker(Thread):
         super().__init__(daemon=True)
         
     def run(self):
-        while True:
-            tbd_url = self.frontier.get_tbd_url()
-            if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
-                break
-            resp = download(tbd_url, self.config, self.logger)
-            self.logger.info(
-                f"Downloaded {tbd_url}, status <{resp.status}>, "
-                f"using cache {self.config.cache_server}.")
-            scraped_urls = scraper.scraper(tbd_url, resp)
-            for scraped_url in scraped_urls:
-                self.frontier.add_url(scraped_url)
-            self.frontier.mark_url_complete(tbd_url)
-            time.sleep(self.config.time_delay)
-        scraper.generate_report_txt()
+        try:
+            while True:
+                tbd_url = self.frontier.get_tbd_url()
+                if not tbd_url:
+                    self.logger.info("Frontier is empty. Stopping Crawler.")
+                    break
+                resp = download(tbd_url, self.config, self.logger)
+                self.logger.info(
+                    f"Downloaded {tbd_url}, status <{resp.status}>, "
+                    f"using cache {self.config.cache_server}.")
+                scraped_urls = scraper.scraper(tbd_url, resp)
+                for scraped_url in scraped_urls:
+                    self.frontier.add_url(scraped_url)
+                self.frontier.mark_url_complete(tbd_url)
+                time.sleep(self.config.time_delay)
+        except Exception as err:
+            print(err)
+        finally: 
+            scraper.generate_report_txt()
