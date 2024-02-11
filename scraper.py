@@ -87,8 +87,8 @@ def my_tokenize(text_content):
     tokens_list = list()
     lines = text_content.split('\n')
     for line in lines:
-        words = re.split(r'[^a-zA-Z0-9]', line.lower())
-        words = [word for word in words if len(word) > 1 and word not in stop_words]
+        words = re.split(r'[^a-zA-Z]', line.lower())
+        words = [word for word in words if len(word) > 2 and word not in stop_words]
         tokens_list.extend(words)
     return tokens_list
 
