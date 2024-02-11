@@ -37,7 +37,6 @@ subdomain_and_numpages = dict() # subdomain as key, pages count as value
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    print(links)
     return [link for link in links if is_valid(link)]
 
 
@@ -228,7 +227,7 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
-
+        print(parsed)
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
             print("flag1")
             if read_robots(url):                # Checks if robots.txt allows crawlers
