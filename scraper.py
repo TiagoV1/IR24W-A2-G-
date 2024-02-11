@@ -226,8 +226,7 @@ def is_valid(url):
 
     try:
         parsed = urlparse(url)
-        pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
-        print(parsed)
+        pattern = re.compile(r"(?:http?://|https?://)?(?:\w+\.)?(?:ics|cs|informatics|stat)\.uci\.edu/")
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
             print("flag1")
             if read_robots(url):                # Checks if robots.txt allows crawlers
