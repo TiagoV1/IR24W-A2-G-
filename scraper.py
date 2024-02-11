@@ -157,30 +157,30 @@ def remove_fragment(url):
     return reconstructed_url
 
 
+def calendar_trap_check(parsed, path_segments):
+    '''
+    Checks for any URLs that are calendar traps.
+    '''
+    date_pattern = re.compile(r'(?<!\d)(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))(?!\d)')
+
+    if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
+        return True
+    elif bool(set(parsed.path.split("-")) & date_terms):
+        return True
+    return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
+
+
 def dynamic_trap_check(parsed):
     '''
     Checks if URL is a Dynamic Trap but looking 
     into matching keywords.
     ''' 
     url_query = parsed.query
-    if url_query:
+    if url_query != "":
         query_params = parse_qs(url_query)
         if len(query_params) > 7:
             return True
     return False
-
-
-def calendar_trap_check(parsed, path_segments):
-    '''
-    Checks for any URLs that are calendar traps.
-    '''
-    date_pattern = re.compile(r'/(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
-
-    if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL's path
-        print(str(parsed) + " is calendar trap")
-        return True
-    return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past and other similar date terms in query to avoid going too deep into calendar
-
 
 def is_trap(url, parsed):
     '''
