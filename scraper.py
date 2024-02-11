@@ -57,7 +57,6 @@ def extract_next_links(url, resp):
     extracted_links = set()
     if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
-            print("flag: 2 page_content extracted" + page_content)
             page_tokens = my_tokenize(page_content)
             if len(page_tokens) > 100:
 
@@ -89,6 +88,8 @@ def my_tokenize(text_content):
     for word in re.findall('[^a-zA-Z0-9]', text_content):
         if word.lower() not in stop_words:
             token_list.append(word.lower())
+    list_as_string = ', '.join(map(str, token_list))
+    print(list_as_string)
     return token_list
 
 
