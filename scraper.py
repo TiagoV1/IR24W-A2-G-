@@ -57,7 +57,6 @@ def extract_next_links(url, resp):
     extracted_links = set()
     if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
-            print("flag: 2 page_content extracted" + page_content)
             page_tokens = my_tokenize(page_content)
             if len(page_tokens) > 100:
 
@@ -230,8 +229,11 @@ def is_valid(url):
         pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
 
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
+            print("flag1")
             if read_robots(url):                # Checks if robots.txt allows crawlers
+                print("flag2")
                 if not is_trap(url, parsed):    # Check if the URL is a trap
+                    print("flag3")
                     return not re.match(
                         r".*.(css|js|bmp|gif|jpe?g|ico"
                         + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -265,7 +267,7 @@ def generate_report_txt():
         report.write("" + "\n")
 
         report.write("------------------QUESTION #3------------------"+"\n")
-        report.write("The following are the 50 most common words\n")
+        report.write("The following are the 50 most common words" + "\n")
         top_50_words = sorted(words_and_frequency.items(), key=lambda item: item[1], reverse=True)[:50]
         for word, frequency in top_50_words:
             report.write(f"Word: {word}, Frequency: {frequency}" + "\n")
