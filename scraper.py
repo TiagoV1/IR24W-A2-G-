@@ -84,12 +84,12 @@ def extract_next_links(url, resp):
 def my_tokenize(text_content):
     # this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
     # Tokens are all alphanumeric characters
+    print(text_content)
     token_list = list()
     for word in re.findall('[^a-zA-Z0-9]', text_content):
+        print(word)
         if word.lower() not in stop_words:
             token_list.append(word.lower())
-    list_as_string = ', '.join(map(str, token_list))
-    print(list_as_string)
     return token_list
 
 
