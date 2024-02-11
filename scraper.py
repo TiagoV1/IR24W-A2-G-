@@ -96,11 +96,16 @@ def my_tokenize(text_content):
     for line in text_content.split('\n'):
         #Work on threshold for later
         
-        words = re.split(r'[^a-zA-Z0-9]', line.lower())                                             # spliting and turning all to lower case
-        words = [word for word in words if (word and word not in stop_words and len(word) > 1)]     # to  remove duplicates and filter out stop words
+        #words = re.split(r'\b[^a-zA-Z\']+\b', line.lower())                                             # spliting and turning all to lower case
+        words = re.findall(r'[A-Za-z0-9]+(?:[\.\'\’\‘][A-Za-z0-9]+)*', line.lower())
+        for index in range(len(words)):
+            if "‘" in words[index] or "’" in words[index]:   
+                words[index] = words[index].replace("’", '\'')
+                words[index] = words[index].replace("‘", '\'')
+            
+        words = [word for word in words if (word and word not in stop_words)]     # to  remove duplicates and filter out stop words
         tokens_list.extend(words)
     return tokens_list
-
 
 def is_ics_uci_edu_subdomain(link):
     '''
@@ -225,8 +230,7 @@ def is_valid(url):
                 #Avoid zip attachments
                 if "zip-attachment" in parsed.path.lower():
                     return False
-                if parsed.fragment != '':
-                    return False
+
                 #Avoid queries that are not id related
                 if parsed.query != '' and "id" not in parsed.query.lower():
                     return False
