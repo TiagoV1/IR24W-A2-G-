@@ -95,7 +95,7 @@ def my_tokenize(text_content):
         #Work on threshold for later
         
         words = re.split(r'[^a-zA-Z0-9]', line.lower())# spliting and turning all to lower case
-        words = [word for word in words if (word and word not in stop_words)]# to  remove duplicates and filter out stop words
+        words = [word for word in words if (word and word not in stop_words and len(word > 1))]# to  remove duplicates and filter out stop words
         tokens_list.extend(words)
     return tokens_list
 
@@ -210,10 +210,10 @@ def is_trap(url, parsed):
         print("it is a session ID trap")
         return True
 
-    #return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+    return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
                                                                                     # and Covers Calendar Trap by checking repeating paths
 
-    return calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+    #return calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
                                                                                     # and Covers Calendar Trap by checking repeating paths
 
 def is_valid(url):
@@ -291,6 +291,6 @@ def generate_report_txt():
         sorted_subdomains = sorted(subdomain_and_numpages.keys())
         for subdomain in sorted_subdomains:
             num_pages = subdomain_and_numpages[subdomain]
-            print(f"{subdomain}, {num_pages}")
+            report.write(f"{subdomain}, {num_pages}")
         report.write("" + "\n")
         report.write("" + "\n")
