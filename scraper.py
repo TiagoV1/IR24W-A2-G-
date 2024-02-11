@@ -95,7 +95,7 @@ def my_tokenize(text_content):
         #Work on threshold for later
         
         words = re.split(r'[^a-zA-Z0-9]', line.lower())# spliting and turning all to lower case
-        words = [word for word in words if (word and word not in stop_words and len(word > 1))]# to  remove duplicates and filter out stop words
+        words = [word for word in words if (word and word not in stop_words and len(word) > 1)]# to  remove duplicates and filter out stop words
         tokens_list.extend(words)
     return tokens_list
 
