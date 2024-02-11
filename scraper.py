@@ -1,9 +1,9 @@
 import re
 from urllib.parse import urlparse, urlunparse, parse_qs, urldefrag
 from bs4 import BeautifulSoup
-import time
+# import time
 from collections import namedtuple
-from urllib import robotparser
+# from urllib import robotparser
 
 
 
@@ -225,7 +225,8 @@ def is_valid(url):
                 #Avoid zip attachments
                 if "zip-attachment" in parsed.path.lower():
                     return False
-                
+                if parsed.fragment != '':
+                    return False
                 #Avoid queries that are not id related
                 if parsed.query != '' and "id" not in parsed.query.lower():
                     return False
@@ -279,7 +280,7 @@ def generate_report_txt():
         report.write("The following are the 50 most common words" + "\n")
         top_50_words = sorted(words_and_frequency.items(), key=lambda item: item[1], reverse=True)[:50]
         for word, frequency in top_50_words:
-            report.write(f"Word: {word}, Frequency: {frequency}" + "\n")
+            report.write(f"Word: {word} - Frequency: {frequency}" + "\n")
         report.write("" + "\n")
         report.write("" + "\n")
 
@@ -288,6 +289,6 @@ def generate_report_txt():
         sorted_subdomains = sorted(subdomain_and_numpages.keys())
         for subdomain in sorted_subdomains:
             num_pages = subdomain_and_numpages[subdomain]
-            report.write(f"{subdomain}, {num_pages}")
+            report.write(f"Subdomain:{subdomain}, Number Of Pages:{num_pages}\n")
         report.write("" + "\n")
         report.write("" + "\n")
