@@ -37,6 +37,7 @@ subdomain_and_numpages = dict() # subdomain as key, pages count as value
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
+    print(links)
     return [link for link in links if is_valid(link)]
 
 
