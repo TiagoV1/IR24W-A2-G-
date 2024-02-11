@@ -1,14 +1,14 @@
 import re
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, parse_qs
 from bs4 import BeautifulSoup
 import time
 from collections import namedtuple
 from urllib import robotparser
 
 
-visited_urls = []                                # List of all urls that have been visited
-check_dynamic_traps_query = set()                # Set of sliced querys to check for dynamic traps
-date_terms = {"past", "day", "month", "year"} # Set of date terms
+visited_urls = []                               # List of all urls that have been visited
+check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
+date_terms = {"past", "day", "month", "year"}   # Set of date terms
 index_content = []                              # Index content of redirected URLs
 
 global stop_words
@@ -53,32 +53,33 @@ def extract_next_links(url, resp):
     
     #note that one megabyte is equal to 1024 * 1024
     global visited_urls
-    
     extracted_links = set()
-    if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
-            page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
-            page_tokens = my_tokenize(page_content)
-            if len(page_tokens) > 100:
+    try: 
+        if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
+                page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
+                page_tokens = my_tokenize(page_content)
+                if len(page_tokens) > 100:
 
-                create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
-                update_word_frequency(page_tokens)
+                    create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
+                    update_word_frequency(page_tokens)
 
-                for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
-                    absolute_link = link['href']
-                    if absolute_link != url and absolute_link not in visited_urls:
-                        update_unique_pages_found(url, len(page_tokens))
-                        extracted_links.add(absolute_link)
+                    for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
+                        absolute_link = link['href']
+                        if absolute_link != url and absolute_link not in visited_urls:
+                            update_unique_pages_found(url, len(page_tokens))
+                            extracted_links.add(absolute_link)
 
-    elif resp.status == 301 or resp.status == 302:
-        index_content.append(url)
-        list_as_string = ', '.join(map(str, index_content))
-        print("flag 6: is 3XX:" + list_as_string)
-
-    else:
-        print("ERROR", resp.error)
-
-    visited_urls.append(url)
-    return list(extracted_links)
+        elif resp.status == 301 or resp.status == 302:
+            index_content.append(url)
+            list_as_string = ', '.join(map(str, index_content))
+            print("flag 6: is 3XX:" + list_as_string)
+        else:
+            print("ERROR", resp.error)
+    except Exception as err:
+        print(f"Error processing URL {url}: {err}")
+    finally: 
+        visited_urls.append(url)
+        return list(extracted_links)
 
 
 def my_tokenize(text_content):
@@ -87,8 +88,8 @@ def my_tokenize(text_content):
     tokens_list = list()
     lines = text_content.split('\n')
     for line in lines:
-        words = re.split(r'[^a-zA-Z0-9]', line.lower())
-        words = [word for word in words if len(word) > 1 and word not in stop_words]
+        words = re.split(r'[^a-zA-Z]', line.lower())
+        words = [word for word in words if len(word) > 2 and word not in stop_words]
         tokens_list.extend(words)
     return tokens_list
 
@@ -98,7 +99,7 @@ def is_ics_uci_edu_subdomain(link):
     Checks if the subdomain is ics.uci.edu
     '''
     hostInfo = urlparse(link).hostname
-    return re.match(r'(?:http?://|https?://).*\.ics\.uci\.edu', hostInfo)
+    return re.match(r'\b(?:https?://)?(?:[a-zA-Z0-9-]+\.)?ics\.uci\.edu\b', hostInfo)
     
     
 def create_subdomain_dictionary(url):
@@ -161,16 +162,19 @@ def dynamic_trap_check(parsed):
     ''' 
     url_query = parsed.query
     if url_query:
-        index = url_query.index("=")
-        new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
-
-        if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-            print(str(parsed) + " dynamic trap")
+        query_params = parse_qs(url_query)
+        if len(query_params) > 7:
             return True
-        else:
-            check_dynamic_traps_query.add(new_url_query)
-            print("not dynamic trap")
-            return False
+        # index = url_query.index("=")
+        # new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
+
+        # if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
+        #     print(str(parsed) + " dynamic trap")
+        #     return True
+        # else:
+        #     check_dynamic_traps_query.add(new_url_query)
+        #     print("not dynamic trap")
+        #     return False
     return False
 
 
@@ -229,11 +233,11 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:\w+\.)?(?:ics|cs|informatics|stat)\.uci\.edu/")
-        if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
+        if re.match(pattern, url.lower()):      # Checks if URL matches the requirements
             if read_robots(url):                # Checks if robots.txt allows crawlers
                 if not is_trap(url, parsed):    # Check if the URL is a trap
                     return not re.match(
-                        r".*.(css|js|bmp|gif|jpe?g|ico"
+                        r".*.(css|jxs|bmp|gif|jpe?g|ico"
                         + r"|png|tiff?|mid|mp2|mp3|mp4"
                         + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
                         + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"

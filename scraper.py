@@ -101,7 +101,7 @@ def is_ics_uci_edu_subdomain(link):
     Checks if the subdomain is ics.uci.edu
     '''
     hostInfo = urlparse(link).hostname
-    return re.match(r'(?:http?://|https?://).*\.ics\.uci\.edu', hostInfo)
+    return re.match(r'\b(?:https?://)?(?:[a-zA-Z0-9-]+\.)?ics\.uci\.edu\b', hostInfo)
     
     
 def create_subdomain_dictionary(url):
