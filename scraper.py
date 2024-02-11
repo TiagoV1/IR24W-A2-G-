@@ -57,6 +57,7 @@ def extract_next_links(url, resp):
     extracted_links = set()
     if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
+            print("flag: 2 page_content extracted" + page_content)
             page_tokens = my_tokenize(page_content)
             if len(page_tokens) > 100:
 
@@ -73,6 +74,7 @@ def extract_next_links(url, resp):
     elif resp.status == 301 or resp.status == 302:
         index_content.append(url)
         list_as_string = ', '.join(map(str, index_content))
+        print("flag 6: is 3XX:" + list_as_string)
 
     else:
         print("ERROR", resp.error)
@@ -83,12 +85,13 @@ def extract_next_links(url, resp):
 def my_tokenize(text_content):
     # this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
     # Tokens are all alphanumeric characters
-    token_list = list()
-    for word in re.findall('[^a-zA-Z0-9]', text_content):
-        print("token: " + word)
-        if word.lower() not in stop_words:
-            token_list.append(word.lower())
-    return token_list
+    tokens_list = list()
+    lines = text_content.split('\n')
+    for line in lines:
+        words = re.split(r'[^a-zA-Z0-9]', line.lower())
+        words = [word for word in words if word]
+        tokens_list.extend(words)
+    return tokens_list
 
 
 def is_ics_uci_edu_subdomain(link):
