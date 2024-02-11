@@ -56,22 +56,30 @@ def extract_next_links(url, resp):
     
     extracted_links = set()
     if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
+            print("flag: 1")
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
+            print("flag: 2 page_content extracted")
             page_tokens = my_tokenize(page_content)
+            print("tokens have been tokenized:" + len(page_tokens))
             if len(page_tokens) > 100:
 
                 create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
                 update_word_frequency(page_tokens)
+                print("flag: 3")
 
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
                     absolute_link = link['href']
+                    print("flag 4:" + absolute_link)
                     if absolute_link != url and absolute_link not in visited_urls:
                         visited_urls.append(absolute_link)
                         update_unique_pages_found(url, len(page_tokens))
                         extracted_links.add(absolute_link)
+                        print("flag 5: passed")
 
     elif resp.status == 301 or resp.status == 302:
         index_content.append(url)
+        list_as_string = ', '.join(map(str, index_content))
+        print("flag 6: is 3XX:" + list_as_string)
 
     else:
         print("ERROR", resp.error)
@@ -106,6 +114,7 @@ def create_subdomain_dictionary(url):
     '''
     global subdomain_and_numpages
     parsed_hostname = urlparse(url).hostname
+    print(parsed_hostname)
 
     if is_ics_uci_edu_subdomain(url):
         if parsed_hostname in subdomain_and_numpages:
