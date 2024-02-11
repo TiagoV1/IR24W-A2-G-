@@ -111,7 +111,6 @@ def create_subdomain_dictionary(url):
     '''
     global subdomain_and_numpages
     parsed_hostname = urlparse(url).hostname
-    print(parsed_hostname)
 
     if is_ics_uci_edu_subdomain(url):
         if parsed_hostname in subdomain_and_numpages:
@@ -150,11 +149,9 @@ def read_robots(url, user_agent='IR UW24 34909351,23919089'):
     Reads robots.txt and deems if it is 
     allowed to be crawled to.
     '''
-    print("robot.txt will be read")
     rp = robotparser.RobotFileParser()      # Parses robot.txt
     rp.set_url(url + '/robots.txt')         # Set the URL of the robots.txt file
     rp.read()                               # Read and parse the robots.txt file
-    print("robot.txt is read")
     return rp.can_fetch(user_agent, url)    # Searches robots.txt and returns boolean if site can be crawled
 
 
@@ -163,17 +160,17 @@ def dynamic_trap_check(parsed):
     Checks if URL is a Dynamic Trap but looking 
     into matching keywords.
     ''' 
-    print("dynamic trap will start")
+    # print("dynamic trap will start")
     url_query = parsed.query
     index = url_query.index("=")
     new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
 
     if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-        print("dynamic trap")
+        # print("dynamic trap")
         return True
     else:
         check_dynamic_traps_query.add(new_url_query)
-        print("not dynamic trap")
+        # print("not dynamic trap")
         return False
 
 
@@ -181,12 +178,12 @@ def calendar_trap_check(parsed, path_segments):
     '''
     Checks for any URLs that are calendar traps.
     '''
-    print("calendar check will start")
+    # print("calendar check will start")
     date_pattern = re.compile(r'/(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
 
     if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
         return True
-    print("calendar ending")
+    # print("calendar ending")
     return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
 
 
@@ -200,19 +197,19 @@ def is_trap(url, parsed):
         - Session ID Trap
         - Dynamic URL Trap
     '''
-    print("is_valid is starting")
+    # print("is_valid is starting")
     path_segments = parsed.path.lower().split("/")
     
     if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
-        print("it is a visited url trap")
+        # print("it is a visited url trap")
         return True  
     
     elif len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
-        print("it is a repeating path url trap")
+        # print("it is a repeating path url trap")
         return True
         
     elif "session" in path_segments or "session" in parsed.query:   # Check for Session ID traps
-        print("it is a session ID trap")
+        # print("it is a session ID trap")
         return True
 
     return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
