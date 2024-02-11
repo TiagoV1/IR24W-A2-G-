@@ -165,7 +165,7 @@ def dynamic_trap_check(parsed):
         new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
 
         if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-            print(parsed + " dynamic trap")
+            print(str(parsed) + " dynamic trap")
             return True
         else:
             check_dynamic_traps_query.add(new_url_query)
@@ -182,7 +182,7 @@ def calendar_trap_check(parsed, path_segments):
     date_pattern = re.compile(r'/(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
 
     if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
-        print(parsed + " is calendar trap")
+        print(str(parsed) + " is calendar trap")
         return True
     return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
 
