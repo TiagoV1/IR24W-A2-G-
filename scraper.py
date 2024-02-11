@@ -53,7 +53,7 @@ def extract_next_links(url, resp):
     
     #note that one megabyte is equal to 1024 * 1024
     global visited_urls
-    
+    print("current url = ", url)
     extracted_links = set()
     if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
