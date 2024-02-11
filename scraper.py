@@ -289,10 +289,10 @@ def generate_report_txt():
         report.write("" + "\n")
 
         report.write("------------------QUESTION #4------------------"+"\n")
-        report.write("Number of subdomains in the ics.uci.edu domain: " + str(len(subdomain_and_numpages.keys())))
+        report.write("Number of subdomains in the ics.uci.edu domain: " + str(len(subdomain_and_numpages.keys()))+ "\n")
         sorted_subdomains = sorted(subdomain_and_numpages.keys())
         for subdomain in sorted_subdomains:
             num_pages = subdomain_and_numpages[subdomain]
-            report.write(f"Subdomain:{subdomain}, Number Of Pages:{num_pages}\n")
+            report.write(f"{subdomain}, {num_pages}\n")
         report.write("" + "\n")
         report.write("" + "\n")
