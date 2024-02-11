@@ -4,12 +4,11 @@ from bs4 import BeautifulSoup
 import time
 from collections import namedtuple
 from urllib import robotparser
-import requests
 
 
-visited_urls = []                               # List of all urls that have been visited
-check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
-date_terms = {"past", "day", "month", "year"}   # Set of date terms
+visited_urls = []                                # List of all urls that have been visited
+check_dynamic_traps_query = set()                # Set of sliced querys to check for dynamic traps
+date_terms = {"past", "day", "month", "year"} # Set of date terms
 index_content = []                              # Index content of redirected URLs
 
 global stop_words
@@ -51,8 +50,12 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+    
+    #note that one megabyte is equal to 1024 * 1024
+    global visited_urls
+    
     extracted_links = set()
-    if resp.status == 200 and resp.raw_response.content:
+    if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             page_tokens = my_tokenize(page_content)
             if len(page_tokens) > 100:
@@ -63,27 +66,31 @@ def extract_next_links(url, resp):
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
                     absolute_link = link['href']
                     if absolute_link != url and absolute_link not in visited_urls:
-                        visited_urls.append(absolute_link)
                         update_unique_pages_found(url, len(page_tokens))
                         extracted_links.add(absolute_link)
 
     elif resp.status == 301 or resp.status == 302:
         index_content.append(url)
+        list_as_string = ', '.join(map(str, index_content))
+        print("flag 6: is 3XX:" + list_as_string)
 
     else:
         print("ERROR", resp.error)
-    time.sleep(2)
+
+    visited_urls.append(url)
     return list(extracted_links)
 
 
 def my_tokenize(text_content):
     # this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
     # Tokens are all alphanumeric characters
-    token_list = list()
-    for word in re.findall('[^a-zA-Z0-9]', text_content):
-        if word.lower() not in stop_words:
-            token_list.append(word.lower())
-    return token_list
+    tokens_list = list()
+    lines = text_content.split('\n')
+    for line in lines:
+        words = re.split(r'[^a-zA-Z0-9]', line.lower())
+        words = [word for word in words if len(word) > 1 and word not in stop_words]
+        tokens_list.extend(words)
+    return tokens_list
 
 
 def is_ics_uci_edu_subdomain(link):
@@ -121,6 +128,7 @@ def update_word_frequency(tokens):
 
 
 def update_unique_pages_found(link, other_word_count):
+    global unique_pages_found
     link = remove_fragment(link)
     if link in unique_pages_found:
         unique_pages_found[link] += other_word_count
@@ -152,27 +160,31 @@ def dynamic_trap_check(parsed):
     into matching keywords.
     ''' 
     url_query = parsed.query
-    index = url_query.index("=")
-    new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
+    if url_query:
+        index = url_query.index("=")
+        new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
 
-    if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-        return True
-    else:
-        check_dynamic_traps_query.add(new_url_query)
-        return False
+        if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
+            print(str(parsed) + " dynamic trap")
+            return True
+        else:
+            check_dynamic_traps_query.add(new_url_query)
+            print("not dynamic trap")
+            return False
+    return False
 
 
 def calendar_trap_check(parsed, path_segments):
     '''
     Checks for any URLs that are calendar traps.
     '''
+    # print("calendar check will start")
     date_pattern = re.compile(r'/(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
 
     if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
+        print(str(parsed) + " is calendar trap")
         return True
-    elif bool(set(parsed.query) & date_terms):    # Checks for evenDisplay=past to avoid going too deep into calendar
-        return True
-    return False
+    return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
 
 
 def is_trap(url, parsed):
@@ -185,15 +197,20 @@ def is_trap(url, parsed):
         - Session ID Trap
         - Dynamic URL Trap
     '''
+    # print("is_valid is starting")
     path_segments = parsed.path.lower().split("/")
+    path_segments = path_segments[1:]
     
-    if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
-        return True  
-
-    elif len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
+    # if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
+    #     print("it is a visited url trap")
+    #     return True
+    
+    if len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
+        print("Repeating path url trap: " + url)
         return True
         
     elif "session" in path_segments or "session" in parsed.query:   # Check for Session ID traps
+        print("it is a session ID trap")
         return True
 
     return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
@@ -211,8 +228,7 @@ def is_valid(url):
 
     try:
         parsed = urlparse(url)
-        pattern = re.compile(r"(?:http?://|https?://)?(?:ics|cs|informatics|stat)\.uci\.edu\/S*")
-
+        pattern = re.compile(r"(?:http?://|https?://)?(?:\w+\.)?(?:ics|cs|informatics|stat)\.uci\.edu/")
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
             if read_robots(url):                # Checks if robots.txt allows crawlers
                 if not is_trap(url, parsed):    # Check if the URL is a trap
@@ -233,6 +249,8 @@ def is_valid(url):
 
 def generate_report_txt():
     with open('report.txt', 'w') as report:
+        print("number of unique pages found: "+ str(len(unique_pages_found.keys())))
+
         report.write("------------------Report------------------"+ "\n")
         report.write("" + "\n")
 
@@ -247,7 +265,7 @@ def generate_report_txt():
         report.write("" + "\n")
 
         report.write("------------------QUESTION #3------------------"+"\n")
-        report.write("The following are the 50 most common words")
+        report.write("The following are the 50 most common words" + "\n")
         top_50_words = sorted(words_and_frequency.items(), key=lambda item: item[1], reverse=True)[:50]
         for word, frequency in top_50_words:
             report.write(f"Word: {word}, Frequency: {frequency}" + "\n")

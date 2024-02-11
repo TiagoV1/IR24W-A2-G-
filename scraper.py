@@ -1,14 +1,14 @@
 import re
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse, parse_qs
 from bs4 import BeautifulSoup
 import time
 from collections import namedtuple
 from urllib import robotparser
 
 
-visited_urls = []                                # List of all urls that have been visited
-check_dynamic_traps_query = set()                # Set of sliced querys to check for dynamic traps
-date_terms = {"past", "day", "month", "year"} # Set of date terms
+visited_urls = []                               # List of all urls that have been visited
+check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
+date_terms = {"past", "day", "month", "year"}   # Set of date terms
 index_content = []                              # Index content of redirected URLs
 
 global stop_words
@@ -161,16 +161,19 @@ def dynamic_trap_check(parsed):
     ''' 
     url_query = parsed.query
     if url_query:
-        index = url_query.index("=")
-        new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
-
-        if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-            print(str(parsed) + " dynamic trap")
+        query_params = parse_qs(url_query)
+        if len(query_params) > 7:
             return True
-        else:
-            check_dynamic_traps_query.add(new_url_query)
-            print("not dynamic trap")
-            return False
+        # index = url_query.index("=")
+        # new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
+
+        # if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
+        #     print(str(parsed) + " dynamic trap")
+        #     return True
+        # else:
+        #     check_dynamic_traps_query.add(new_url_query)
+        #     print("not dynamic trap")
+        #     return False
     return False
 
 
