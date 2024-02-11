@@ -60,7 +60,8 @@ def extract_next_links(url, resp):
             page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
             print("flag: 2 page_content extracted")
             page_tokens = my_tokenize(page_content)
-            print("tokens have been tokenized:" + len(page_tokens))
+            list_as_string_tokens = ', '.join(map(str, page_tokens))
+            print("tokens have been tokenized:" + list_as_string_tokens)
             if len(page_tokens) > 100:
 
                 create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
