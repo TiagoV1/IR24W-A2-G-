@@ -165,11 +165,11 @@ def dynamic_trap_check(parsed):
     new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
 
     if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-        # print("dynamic trap")
+        print("dynamic trap")
         return True
     else:
         check_dynamic_traps_query.add(new_url_query)
-        # print("not dynamic trap")
+        print("not dynamic trap")
         return False
 
 
@@ -181,8 +181,9 @@ def calendar_trap_check(parsed, path_segments):
     date_pattern = re.compile(r'/(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))/')
 
     if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
+        print("is calendar trap")
         return True
-    # print("calendar ending")
+    print("calendar ending")
     return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
 
 
@@ -200,15 +201,15 @@ def is_trap(url, parsed):
     path_segments = parsed.path.lower().split("/")
     
     if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
-        # print("it is a visited url trap")
+        print("it is a visited url trap")
         return True  
     
     elif len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
-        # print("it is a repeating path url trap")
+        print("it is a repeating path url trap")
         return True
         
     elif "session" in path_segments or "session" in parsed.query:   # Check for Session ID traps
-        # print("it is a session ID trap")
+        print("it is a session ID trap")
         return True
 
     return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
@@ -228,11 +229,8 @@ def is_valid(url):
         parsed = urlparse(url)
         pattern = re.compile(r"(?:http?://|https?://)?(?:\w+\.)?(?:ics|cs|informatics|stat)\.uci\.edu/")
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
-            print("flag1")
             if read_robots(url):                # Checks if robots.txt allows crawlers
-                print("flag2")
                 if not is_trap(url, parsed):    # Check if the URL is a trap
-                    print("flag3")
                     return not re.match(
                         r".*.(css|js|bmp|gif|jpe?g|ico"
                         + r"|png|tiff?|mid|mp2|mp3|mp4"
