@@ -66,7 +66,6 @@ def extract_next_links(url, resp):
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
                     absolute_link = link['href']
                     if absolute_link != url and absolute_link not in visited_urls:
-                        visited_urls.append(absolute_link)
                         update_unique_pages_found(url, len(page_tokens))
                         extracted_links.add(absolute_link)
 
@@ -78,6 +77,7 @@ def extract_next_links(url, resp):
     else:
         print("ERROR", resp.error)
 
+    visited_urls.append(url)
     return list(extracted_links)
 
 
@@ -200,11 +200,11 @@ def is_trap(url, parsed):
     # print("is_valid is starting")
     path_segments = parsed.path.lower().split("/")
     
-    if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
-        print("it is a visited url trap")
-        return True  
+    # if url in visited_urls:                                         # Covers Duplicate URL Traps by checking already visited URLs
+    #     print("it is a visited url trap")
+    #     return True
     
-    elif len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
+    if len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
         print("it is a repeating path url trap")
         return True
         
