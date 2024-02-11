@@ -89,7 +89,7 @@ def my_tokenize(text_content):
     lines = text_content.split('\n')
     for line in lines:
         words = re.split(r'[^a-zA-Z0-9]', line.lower())
-        words = [word for word in words if word and word not in stop_words]
+        words = [word for word in words if len(word) > 1 and word not in stop_words]
         tokens_list.extend(words)
     return tokens_list
 
@@ -265,7 +265,7 @@ def generate_report_txt():
         report.write("" + "\n")
 
         report.write("------------------QUESTION #3------------------"+"\n")
-        report.write("The following are the 50 most common words")
+        report.write("The following are the 50 most common words\n")
         top_50_words = sorted(words_and_frequency.items(), key=lambda item: item[1], reverse=True)[:50]
         for word, frequency in top_50_words:
             report.write(f"Word: {word}, Frequency: {frequency}" + "\n")
