@@ -66,7 +66,6 @@ def extract_next_links(url, resp):
                 for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
                     absolute_link = link['href']
                     if absolute_link != url and absolute_link not in visited_urls:
-                        print("update lists on frontier")
                         visited_urls.append(absolute_link)
                         update_unique_pages_found(url, len(page_tokens))
                         extracted_links.add(absolute_link)
