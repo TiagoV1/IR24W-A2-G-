@@ -73,7 +73,6 @@ def extract_next_links(url, resp):
     elif resp.status == 301 or resp.status == 302:
         index_content.append(url)
         list_as_string = ', '.join(map(str, index_content))
-        print("flag 6: is 3XX:" + list_as_string)
 
     else:
         print("ERROR", resp.error)
@@ -84,10 +83,9 @@ def extract_next_links(url, resp):
 def my_tokenize(text_content):
     # this is Santiago's tokenize for assingmnet1 modefied to work for this assignment
     # Tokens are all alphanumeric characters
-    print(text_content)
     token_list = list()
     for word in re.findall('[^a-zA-Z0-9]', text_content):
-        print(word)
+        print("token: " + word)
         if word.lower() not in stop_words:
             token_list.append(word.lower())
     return token_list
