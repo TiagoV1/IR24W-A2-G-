@@ -6,7 +6,7 @@ from collections import namedtuple
 from urllib import robotparser
 
 
-visited_urls = []                               # List of all urls that have been visited
+visited_urls = set()                               # List of all urls that have been visited
 check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
 date_terms = {"past", "day", "month", "year"}   # Set of date terms
 index_content = []                              # Index content of redirected URLs
@@ -54,6 +54,8 @@ def extract_next_links(url, resp):
     #note that one megabyte is equal to 1024 * 1024
     global visited_urls
     extracted_links = set()
+    if url in visited_urls:
+        return []
     try: 
         if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
                 page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
@@ -78,7 +80,7 @@ def extract_next_links(url, resp):
     except Exception as err:
         print(f"Error processing URL {url}: {err}")
     finally: 
-        visited_urls.append(url)
+        visited_urls.add(url)
         return list(extracted_links)
 
 
