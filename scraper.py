@@ -237,6 +237,8 @@ def is_valid(url):
 
 def generate_report_txt():
     with open('report.txt', 'w') as report:
+        print("number of unique pages found: "+ len(unique_pages_found.keys()))
+
         report.write("------------------Report------------------"+ "\n")
         report.write("" + "\n")
 
