@@ -219,9 +219,11 @@ def is_trap(url, parsed):
         print("it is a session ID trap")
         return True
 
-    return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+    #return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
                                                                                     # and Covers Calendar Trap by checking repeating paths
 
+    return calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+                                                                                    # and Covers Calendar Trap by checking repeating paths
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -238,16 +240,32 @@ def is_valid(url):
         if parsed.scheme in set(["http", "https"]) and re.match(pattern, url.lower()):  # Checks if URL matches the requirements
             if read_robots(url):                # Checks if robots.txt allows crawlers
                 if not is_trap(url, parsed):    # Check if the URL is a trap
+                    #Avoid user uploads
+                    if "wp-content/uploads" in parsed.path.lower():
+                        return False
+                    
+                    #Avoid zip attachments
+                    if "zip-attachment" in parsed.path.lower():
+                        return False
+                    
+                    #Avoid queries that are not id related
+                    if parsed.query != '' and "id" not in parsed.query.lower():
+                        return False
+                    
                     return not re.match(
-                        r".*.(css|js|bmp|gif|jpe?g|ico"
+                        r".*\.(css|js|bmp|gif|jpe?g|ico|php"
                         + r"|png|tiff?|mid|mp2|mp3|mp4"
                         + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-                        + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-                        + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+                        + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|ppsx"
+                        + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|ova"
                         + r"|epub|dll|cnf|tgz|sha1"
-                        + r"|thmx|mso|arff|rtf|jar|csv"
+                        + r"|thmx|mso|arff|rtf|jar|csv|xml"
+                        + r"|r|py|java|c|cc|cpp|h|svn|svn-base|bw|bigwig"
+                        + r"|txt|odc"
+                        + r"|bam|bai|out|tab|edgecount|junction|ipynb|bib|lif"
                         + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
         return False
+
     
     except TypeError:
         print ("TypeError for ", parsed)
@@ -286,4 +304,3 @@ def generate_report_txt():
             print(f"{subdomain}, {num_pages}")
         report.write("" + "\n")
         report.write("" + "\n")
-        
