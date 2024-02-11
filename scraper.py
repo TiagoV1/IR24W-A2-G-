@@ -159,18 +159,19 @@ def dynamic_trap_check(parsed):
     Checks if URL is a Dynamic Trap but looking 
     into matching keywords.
     ''' 
-    # print("dynamic trap will start")
     url_query = parsed.query
-    index = url_query.index("=")
-    new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
+    if url_query:
+        index = url_query.index("=")
+        new_url_query = parsed.hostname + parsed.path + "?" + url_query[0:index]  # Rebuilds the url but with only the first parameter
 
-    if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
-        print("dynamic trap")
-        return True
-    else:
-        check_dynamic_traps_query.add(new_url_query)
-        print("not dynamic trap")
-        return False
+        if new_url_query in check_dynamic_traps_query:          # Checks if the URL is already been crawled through
+            print("dynamic trap")
+            return True
+        else:
+            check_dynamic_traps_query.add(new_url_query)
+            print("not dynamic trap")
+            return False
+    return False
 
 
 def calendar_trap_check(parsed, path_segments):
@@ -183,7 +184,6 @@ def calendar_trap_check(parsed, path_segments):
     if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
         print("is calendar trap")
         return True
-    print("calendar ending")
     return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
 
 
@@ -205,7 +205,7 @@ def is_trap(url, parsed):
     #     return True
     
     if len(path_segments) != len(set(path_segments)):             # Checks for any repeating paths
-        print("it is a repeating path url trap")
+        print("Repeating path url trap: " + url)
         return True
         
     elif "session" in path_segments or "session" in parsed.query:   # Check for Session ID traps
