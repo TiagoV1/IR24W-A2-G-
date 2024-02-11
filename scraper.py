@@ -53,32 +53,33 @@ def extract_next_links(url, resp):
     
     #note that one megabyte is equal to 1024 * 1024
     global visited_urls
-    print("current url = ", url)
     extracted_links = set()
-    if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
-            page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
-            page_tokens = my_tokenize(page_content)
-            if len(page_tokens) > 100:
+    try: 
+        if resp.status == 200 and resp.raw_response.content and len(resp.raw_response.content) < 10 * 1024 * 1024:
+                page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
+                page_tokens = my_tokenize(page_content)
+                if len(page_tokens) > 100:
 
-                create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
-                update_word_frequency(page_tokens)
+                    create_subdomain_dictionary(url)    # Answers Q4 by checking each subdomain
+                    update_word_frequency(page_tokens)
 
-                for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
-                    absolute_link = link['href']
-                    if absolute_link != url and absolute_link not in visited_urls:
-                        update_unique_pages_found(url, len(page_tokens))
-                        extracted_links.add(absolute_link)
+                    for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
+                        absolute_link = link['href']
+                        if absolute_link != url and absolute_link not in visited_urls:
+                            update_unique_pages_found(url, len(page_tokens))
+                            extracted_links.add(absolute_link)
 
-    elif resp.status == 301 or resp.status == 302:
-        index_content.append(url)
-        list_as_string = ', '.join(map(str, index_content))
-        print("flag 6: is 3XX:" + list_as_string)
-
-    else:
-        print("ERROR", resp.error)
-
-    visited_urls.append(url)
-    return list(extracted_links)
+        elif resp.status == 301 or resp.status == 302:
+            index_content.append(url)
+            list_as_string = ', '.join(map(str, index_content))
+            print("flag 6: is 3XX:" + list_as_string)
+        else:
+            print("ERROR", resp.error)
+    except Exception as err:
+        print(f"Error processing URL {url}: {err}")
+    finally: 
+        visited_urls.append(url)
+        return list(extracted_links)
 
 
 def my_tokenize(text_content):
