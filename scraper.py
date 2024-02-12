@@ -9,7 +9,6 @@ from collections import namedtuple
 
 visited_urls = set()                            # List of all urls that have been visited
 check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
-date_terms = {"past", "day", "month", "year"}   # Set of date terms
 index_content = []                              # Index content of redirected URLs
 
 global stop_words
@@ -157,17 +156,21 @@ def remove_fragment(url):
     return reconstructed_url
 
 
-def calendar_trap_check(parsed, path_segments):
+def calendar_trap_check(parsed):
     '''
     Checks for any URLs that are calendar traps.
     '''
-    date_pattern = re.compile(r'(?<!\d)(?:(?:\d{2,4}-\d{2}-\d{2,4})|(?:\d{2,4}-\d{2,4})|(?:\d{1,2}/\d{1,2}/\d{2,4}))(?!\d)')
+    date_pattern = re.compile(r'\b(?:\d{1,4}[-/]\d{1,2}[-/]\d{1,4})\b|\b(?:\d{1,4}[-/]\d{1,4})\b')
+    date_terms_pattern = re.compile(r'\b(?:past|event|day|week|month|quarter|year)\b')
 
-    if re.match(date_pattern, parsed.path) or bool(set(path_segments) & date_terms):    # Check if there is a number date format in the URL
+    if re.search(date_pattern, parsed.path):
         return True
-    elif bool(set(parsed.path.split("-")) & date_terms):
+    if re.search(date_terms_pattern, parsed.path):
         return True
-    return bool(set(parsed.query) & date_terms) # Checks for evenDisplay=past to avoid going too deep into calendar
+    if parsed.query != "":
+        if re.search(date_pattern, parsed.query):
+            return True
+    return False
 
 
 def dynamic_trap_check(parsed):
@@ -203,10 +206,10 @@ def is_trap(url, parsed):
         print("it is a session ID trap")
         return True
 
-    #return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+    return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
                                                                                     # and Covers Calendar Trap by checking repeating paths
 
-    return calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+    # return calendar_trap_check(parsed) # Covers Dynamic URL Trap by checking for duplicate params
                                                                                     # and Covers Calendar Trap by checking repeating paths
 
 def is_valid(url):
