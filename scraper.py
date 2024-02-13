@@ -58,7 +58,7 @@ def extract_next_links(url, resp):
     if url in visited_urls:
         return []
     try: 
-        if resp.status == 200 and len(resp.raw_response.content) < 10 * 1024 * 1024:
+        if resp.status == 200 and len(resp.raw_response.content) < 5 * 1024 * 1024:
                 page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
                 page_tokens = my_tokenize(page_content)
                 if len(page_tokens) > 100:
