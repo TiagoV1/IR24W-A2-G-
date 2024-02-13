@@ -263,7 +263,7 @@ def is_valid(url):
                     + r"|epub|dll|cnf|tgz|sha1"
                     + r"|thmx|mso|arff|rtf|jar|csv|xml"
                     + r"|r|py|java|c|cc|cpp|h|svn|svn-base|bw|bigwig"
-                    + r"|txt|odc"
+                    + r"|txt|odc|apk|img|war"
                     + r"|bam|bai|out|tab|edgecount|junction|ipynb|bib|lif"
                     + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
         return False
