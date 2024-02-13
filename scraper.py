@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, urlunparse, parse_qs, urldefrag
+from urllib.parse import urlparse, urlunparse, parse_qs, urljoin
 from bs4 import BeautifulSoup
 # import time
 from collections import namedtuple
@@ -67,10 +67,23 @@ def extract_next_links(url, resp):
                     update_word_frequency(page_tokens)
 
                     #Use urllib to create absolute links with urljoin
-
-                    for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):
-                        absolute_link = link['href']
-                        if absolute_link != url and absolute_link not in visited_urls:
+                    for link in BeautifulSoup(resp.raw_response.content, 'html.parser').find_all('a', href=True):                        
+                        link_lead = link['href']
+                        
+                        """
+                        #   urljoin takes two strings: lead url, follow url
+                        #   if the follow url is an absolute link -> http(s)://www.abc.cd/xyz/, it returns the absolute link
+                        #   if the follow url is a relative link -> a/abc/c OR /abc/c, it will create a new absolute link and return it
+                        #       Case a/abc/c:
+                        #           returns lead_url/a/abc/c
+                        #       Case /abc/c:
+                        #           returns lead_url/abc/c
+                        #   More and thourough examples are here: https://stackoverflow.com/a/10893427
+                        """
+                        absolute_link = urljoin(url, link_lead) #Fragments are True by default
+                        
+                        # Ensure the link piece is not the url accessed, actual url and not in visited_url
+                        if absolute_link not in url and absolute_link not in resp.url and absolute_link not in visited_urls:
                             update_unique_pages_found(url, len(page_tokens))
                             extracted_links.add(absolute_link)
 
