@@ -206,7 +206,7 @@ def is_trap(url, parsed):
         print("it is a session ID trap")
         return True
 
-    return dynamic_trap_check(parsed) or calendar_trap_check(parsed, path_segments) # Covers Dynamic URL Trap by checking for duplicate params
+    return dynamic_trap_check(parsed) or calendar_trap_check(parsed) # Covers Dynamic URL Trap by checking for duplicate params
                                                                                     # and Covers Calendar Trap by checking repeating paths
 
     # return calendar_trap_check(parsed) # Covers Dynamic URL Trap by checking for duplicate params
