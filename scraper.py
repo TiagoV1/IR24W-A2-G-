@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse, urlunparse, parse_qs, urljoin
+from urllib.parse import urlparse, urlunparse, parse_qs, urljoin, urldefrag
 from bs4 import BeautifulSoup
 # import time
 from collections import namedtuple
@@ -10,6 +10,7 @@ from collections import namedtuple
 visited_urls = set()                            # List of all urls that have been visited
 check_dynamic_traps_query = set()               # Set of sliced querys to check for dynamic traps
 index_content = []                              # Index content of redirected URLs
+visited_url_paths = dict()                      # Dictionary of paths and frequencies
 
 global stop_words
 stop_words = {'a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', "aren't",
@@ -83,9 +84,10 @@ def extract_next_links(url, resp):
                         absolute_link = urljoin(url, link_lead) #Fragments are True by default
                         
                         # Ensure the link piece is not the url accessed, actual url and not in visited_url
-                        if absolute_link not in url and absolute_link not in resp.url and absolute_link not in visited_urls:
+                        if absolute_link not in url and absolute_link not in resp.url and absolute_link not in extracted_links and absolute_link not in visited_urls:
                             update_unique_pages_found(url, len(page_tokens))
-                            extracted_links.add(absolute_link)
+                            if not is_path_limit_reached(absolute_link):
+                                extracted_links.add(absolute_link)
 
         elif resp.status == 301 or resp.status == 302:
             index_content.append(url)
@@ -125,7 +127,24 @@ def is_ics_uci_edu_subdomain(link):
     '''
     hostInfo = urlparse(link).hostname
     return re.match(r'\b(?:https?://)?(?:[a-zA-Z0-9-]+\.)?ics\.uci\.edu\b', hostInfo)
+
+def is_path_limit_reached(link):
+    '''
+    Take the paths of the link without the fragment and check their frequencies
+    Any path that is visited too much (Here 15) will be rejected from being added to the extracted link list
+    '''
     
+    global visited_url_paths
+    link_to_process = urldefrag(link)[0]
+    
+    if link_to_process not in visited_url_paths:
+        visited_url_paths[link_to_process] = 1
+    elif visited_url_paths[link_to_process] < 15:
+        visited_url_paths[link_to_process] += 1
+    else:
+        return True
+    
+    return False
     
 def create_subdomain_dictionary(url):
     '''
@@ -258,7 +277,7 @@ def is_valid(url):
                     r".*\.(css|js|bmp|gif|jpe?g|ico|php"
                     + r"|png|tiff?|mid|mp2|mp3|mp4"
                     + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-                    + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|ppsx"
+                    + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names|ppsx|pps"
                     + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso|ova"
                     + r"|epub|dll|cnf|tgz|sha1"
                     + r"|thmx|mso|arff|rtf|jar|csv|xml"
