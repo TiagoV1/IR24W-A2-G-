@@ -117,7 +117,7 @@ def my_tokenize(text_content):
                 words[index] = words[index].replace("’", '\'')
                 words[index] = words[index].replace("‘", '\'')
             
-        words = [word for word in words if (word and word not in stop_words)]     # to  remove duplicates and filter out stop words
+        words = [word for word in words if (word and word not in stop_words and not word.isnumeric() and len(word) > 1)]     # to  remove duplicates and filter out stop words
         tokens_list.extend(words)
     return tokens_list
 
