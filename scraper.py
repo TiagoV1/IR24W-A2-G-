@@ -157,6 +157,12 @@ def create_subdomain_dictionary(url):
     parsed_hostname = urlparse(url).hostname
 
     if is_ics_uci_edu_subdomain(url):
+        # if parsed_hostname == "www.ics.uci.edu":
+        #     if "ics.uci.edu" in subdomain_and_numpages:
+        #         subdomain_and_numpages["ics.uci.edu"] = 1
+        #     else:
+        #         subdomain_and_numpages["ics.uci.edu"] += 1
+        # else:
         if parsed_hostname in subdomain_and_numpages:
             subdomain_and_numpages[parsed_hostname] += 1
         else:
