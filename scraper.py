@@ -1,9 +1,6 @@
 import re
 from urllib.parse import urlparse, urlunparse, parse_qs, urljoin, urldefrag
 from bs4 import BeautifulSoup
-# import time
-from collections import namedtuple
-# from urllib import robotparser
 
 
 
@@ -56,15 +53,22 @@ def extract_next_links(url, resp):
     #note that one megabyte is equal to 1024 * 1024
     global visited_urls
     extracted_links = set()
+    # do not scrape urls which have already been scraped 
     if url in visited_urls:
         return []
     try: 
+        # determine if the url is alive, has some text within a range o fless than 5 megabytes
         if resp.status == 200 and len(resp.raw_response.content) < 5 * 1024 * 1024:
+                #get the page text content parsed out
                 page_content = BeautifulSoup(resp.raw_response.content,'html.parser').get_text()
+                #create tokens where tokens are letters of size 2 or larger coupled. 
                 page_tokens = my_tokenize(page_content)
+                #only if tokens are greater than 100, scrape for next links, this is our threshold for meaningful content
                 if len(page_tokens) > 100:
 
+                    # identify if the url is ics.uci.edu equally www.ics.uci.edu
                     create_subdomain_dictionary(url)
+                    # use the tokens to update the word frequencies
                     update_word_frequency(page_tokens)
 
                     #Use urllib to create absolute links with urljoin
@@ -90,14 +94,14 @@ def extract_next_links(url, resp):
                                 extracted_links.add(absolute_link)
 
         elif resp.status == 301 or resp.status == 302:
+            # index urls that is redirect
             index_content.append(url)
-            list_as_string = ', '.join(map(str, index_content))
-            print("flag 6: is 3XX:" + list_as_string)
         else:
             print("ERROR", resp.error)
     except Exception as err:
         print(f"Error processing URL {url}: {err}")
-    finally: 
+    finally:
+        # even if an error is thrown we keep the urls and add them to the extracted links list.
         visited_urls.add(url)
         return list(extracted_links)
 
@@ -108,16 +112,17 @@ def my_tokenize(text_content):
     global stop_words
     tokens_list = []
     for line in text_content.split('\n'):
-        #Work on threshold for later
         
-        #words = re.split(r'\b[^a-zA-Z\']+\b', line.lower())                                             # spliting and turning all to lower case
+        # spliting and turning all to lower case words (letters only) including hyphens 
         words = re.findall(r'[A-Za-z0-9]+(?:[\.\'\’\‘][A-Za-z0-9]+)*', line.lower())
         for index in range(len(words)):
-            if "‘" in words[index] or "’" in words[index]:   
+            if "‘" in words[index] or "’" in words[index]:
+                #replace the highphens in the words because they still do hold meaning   
                 words[index] = words[index].replace("’", '\'')
                 words[index] = words[index].replace("‘", '\'')
-            
-        words = [word for word in words if (word and word not in stop_words and not word.isnumeric() and len(word) > 1)]     # to  remove duplicates and filter out stop words
+        #filter through the words for stop words, check if it is a number, and if it is less than two letters we don't want it to be a word
+        words = [word for word in words if (word and word not in stop_words and not word.isnumeric() and len(word) > 1)]
+        # update token list and return it
         tokens_list.extend(words)
     return tokens_list
 
@@ -151,25 +156,34 @@ def create_subdomain_dictionary(url):
     Parses the URL and checks to see if the hostname 
     is in the subdomain dictionary. If so, then the count
     for the subdomain increases count by 1, else, makes it a 
-    key and sets it to 1.
+    key and sets it to 1. We now consider www.ics.uci.edu and
+    ics.uci.edu the same.
     '''
     global subdomain_and_numpages
     parsed_hostname = urlparse(url).hostname
 
     if is_ics_uci_edu_subdomain(url):
-        # if parsed_hostname == "www.ics.uci.edu":
-        #     if "ics.uci.edu" in subdomain_and_numpages:
-        #         subdomain_and_numpages["ics.uci.edu"] = 1
-        #     else:
-        #         subdomain_and_numpages["ics.uci.edu"] += 1
-        # else:
-        if parsed_hostname in subdomain_and_numpages:
-            subdomain_and_numpages[parsed_hostname] += 1
+        if parsed_hostname == "www.ics.uci.edu":
+            if "ics.uci.edu" in subdomain_and_numpages:
+                subdomain_and_numpages["ics.uci.edu"] = 1
+            else:
+                subdomain_and_numpages["ics.uci.edu"] += 1
         else:
-            subdomain_and_numpages[parsed_hostname] = 1
+            if parsed_hostname in subdomain_and_numpages:
+                subdomain_and_numpages[parsed_hostname] += 1
+            else:
+                subdomain_and_numpages[parsed_hostname] = 1
+
 
 
 def update_word_frequency(tokens):
+    """
+    takes a list of tokens and loops through it
+    to create a word frequency dictionary
+    if the word is not already in the dicitonary the
+    count is set to 1 if it is the count is increased by one
+    per occurance.
+    """
     global words_and_frequency
     for token in tokens:
         if token not in words_and_frequency:
@@ -179,6 +193,13 @@ def update_word_frequency(tokens):
 
 
 def update_unique_pages_found(link, other_word_count):
+    """
+    removes the fragment and if the page with the fragment removed
+    has already been found then we increase the word count of that
+    url by the new words. otherwise we just set it equal to the new
+    words found. We consider pages with different fragements to be
+    part of the same page/url.
+    """
     global unique_pages_found 
     link = remove_fragment(link)
     if link in unique_pages_found:
@@ -188,6 +209,9 @@ def update_unique_pages_found(link, other_word_count):
 
 
 def remove_fragment(url):
+    """
+    Takes a url and removes it's fragment
+    """
     parsed_url = urlparse(url)
     url_without_fragment = parsed_url._replace(fragment='')
     reconstructed_url = urlunparse(url_without_fragment)
@@ -245,9 +269,6 @@ def is_trap(url, parsed):
         return True
 
     return dynamic_trap_check(parsed) or calendar_trap_check(parsed) # Covers Dynamic URL Trap by checking for duplicate params
-                                                                                    # and Covers Calendar Trap by checking repeating paths
-
-    # return calendar_trap_check(parsed) # Covers Dynamic URL Trap by checking for duplicate params
                                                                                     # and Covers Calendar Trap by checking repeating paths
 
 def is_valid(url):
@@ -312,7 +333,6 @@ def generate_report_txt():
         report.write("" + "\n")
 
         report.write("------------------QUESTION #2------------------"+"\n")
-        #report.write("URL with the largest word count: "+ max(unique_pages_found, key=unique_pages_found.get) + "\n")
         if unique_pages_found:
             max_url = max(unique_pages_found, key=unique_pages_found.get)
             report.write("URL with the largest word count: " + max_url + "\n")
